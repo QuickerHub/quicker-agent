@@ -9,7 +9,7 @@ Command-line tool for automating [getquicker.net](https://getquicker.net) in a *
 - **`session new`** — Resolve a CDP endpoint (from `QKAGENT_CDP_URL` or by running `QKAGENT_COMMAND`, default **`qkagent-host`**), connect with Playwright, **log in** using the same selectors as the `QuickerDependencyService` login flow in the local **quicker_build_net** repository, then save session metadata under `%LOCALAPPDATA%\quicker-agent\sessions\`.
 - **`session status`** — Load the session file and check whether the CDP endpoint is still reachable.
 - **`session close`** — Delete the local session metadata file (does **not** terminate the browser or the external CDP launcher process).
-- **`action-doc`** — Placeholder for future read/write of action documentation (`exit code 2` = not implemented).
+- **`action-doc upload`** — After `session new`, uploads HTML from a file into the getquicker.net shared-action intro editor (Summernote). Supports either `--code` + `--html`, or `--dir` with a small YAML manifest (see below).
 
 ## Requirements
 
@@ -48,6 +48,10 @@ Command-line tool for automating [getquicker.net](https://getquicker.net) in a *
 
 # Remove local metadata only
 .\qkagent.exe session close --id mysession
+
+# Upload intro HTML (requires prior session new; account must own the shared action)
+.\qkagent.exe action-doc upload --code "<shared-guid>" --html .\intro.html --id mysession --json
+.\qkagent.exe action-doc upload --dir .\path\to\action-folder --json
 ```
 
 ### Exit codes
@@ -55,8 +59,28 @@ Command-line tool for automating [getquicker.net](https://getquicker.net) in a *
 | Code | Meaning |
 |------|--------|
 | `0` | Success |
-| `1` | Error (missing credentials, no session file, login failure, unreachable CDP for `status`, etc.) |
-| `2` | Command not implemented (`action-doc`) |
+| `1` | Error (missing credentials, no session file, login failure, unreachable CDP for `status`, `action-doc` upload/editor errors, etc.) |
+
+## Action description (folder layout)
+
+One directory per shared action:
+
+| File | Purpose |
+|------|---------|
+| `action.yaml` (or `meta.yaml` / `manifest.yaml`) | Keys: `sharedId` (or `code`) = GUID from the share link; optional `html` = relative path to the HTML file (default `description.html`). |
+| `description.html` | HTML fragment for the action intro (same as you would paste into the web editor). |
+
+Example layout: [samples/action-doc/](samples/action-doc/).
+
+Upload (from repo root; use your real session id if not `default`):
+
+```powershell
+.\publish\agent\qkagent.exe action-doc upload --dir .\samples\action-doc --json
+# or explicit paths:
+.\publish\agent\qkagent.exe action-doc upload --code "<shared-guid>" --html .\path\to\body.html --json
+```
+
+You must be logged in as the **owner** of that shared action. The site only shows the rich-text editor in that case. If the editor or save button cannot be found, set the optional environment variables in `env.example` under `QKAGENT_ACTION_DOC_*`.
 
 ## Publish (reference: quicker_build_net)
 

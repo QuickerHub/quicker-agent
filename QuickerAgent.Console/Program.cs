@@ -15,7 +15,6 @@ public static class ExitCodes
 {
     public const int Success = 0;
     public const int Error = 1;
-    public const int NotImplemented = 2;
 }
 
 internal static class Program
@@ -319,23 +318,144 @@ internal static class Program
         return ExitCodes.Success;
     }
 
-    private static Task<int> RunActionDocAsync(ActionDocOptions options, ILoggerFactory loggerFactory)
+    private static async Task<int> RunActionDocAsync(ActionDocOptions options, ILoggerFactory loggerFactory)
     {
-        _ = loggerFactory;
-        var msg =
-            "action-doc is not implemented yet. Use this verb later to read/write action documentation on getquicker.net.";
+        var verb = (options.Action ?? string.Empty).Trim().ToLowerInvariant();
+        if (verb != "upload")
+        {
+            await EmitErrorAsync(
+                    options.Json,
+                    "UNKNOWN_ACTION_DOC_VERB",
+                    "Use: action-doc upload (--code <sharedId> --html <path> | --dir <folder>) [--id <session>]")
+                .ConfigureAwait(false);
+            return ExitCodes.Error;
+        }
+
+        string sharedId;
+        string htmlPath;
+
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(options.Dir))
+            {
+                var dir = Path.GetFullPath(options.Dir);
+                var manifest = ActionManifestReader.FindManifestPath(dir);
+                if (manifest is null)
+                {
+                    await EmitErrorAsync(
+                            options.Json,
+                            "MANIFEST_NOT_FOUND",
+                            $"No action.yaml / meta.yaml / manifest.yaml under '{dir}'.")
+                        .ConfigureAwait(false);
+                    return ExitCodes.Error;
+                }
+
+                var (id, htmlRel) = ActionManifestReader.Read(manifest, defaultHtmlFile: "description.html");
+                sharedId = id;
+                htmlPath = Path.GetFullPath(Path.Combine(dir, htmlRel));
+            }
+            else if (!string.IsNullOrWhiteSpace(options.Code) && !string.IsNullOrWhiteSpace(options.Html))
+            {
+                sharedId = options.Code.Trim();
+                htmlPath = Path.GetFullPath(options.Html);
+            }
+            else
+            {
+                await EmitErrorAsync(
+                        options.Json,
+                        "MISSING_ARGUMENTS",
+                        "Provide --dir <folder> with manifest YAML, or both --code <sharedId> and --html <path>.")
+                    .ConfigureAwait(false);
+                return ExitCodes.Error;
+            }
+        }
+        catch (Exception ex)
+        {
+            await EmitErrorAsync(options.Json, "ACTION_DOC_MANIFEST_ERROR", ex.Message).ConfigureAwait(false);
+            return ExitCodes.Error;
+        }
+
+        if (!File.Exists(htmlPath))
+        {
+            await EmitErrorAsync(options.Json, "HTML_NOT_FOUND", $"HTML file not found: {htmlPath}")
+                .ConfigureAwait(false);
+            return ExitCodes.Error;
+        }
+
+        string htmlContent;
+        try
+        {
+            htmlContent = await File.ReadAllTextAsync(htmlPath).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            await EmitErrorAsync(options.Json, "HTML_READ_ERROR", ex.Message).ConfigureAwait(false);
+            return ExitCodes.Error;
+        }
+
+        var sessionId = ResolveSessionId(options);
+        var store = new SessionStore();
+        var ct = CancellationToken.None;
+
+        var record = await store.TryLoadAsync(sessionId, ct).ConfigureAwait(false);
+        if (record is null)
+        {
+            await EmitErrorAsync(
+                    options.Json,
+                    "SESSION_NOT_FOUND",
+                    $"No session file for id '{sessionId}'. Run: qkagent.exe session new --id {sessionId}")
+                .ConfigureAwait(false);
+            return ExitCodes.Error;
+        }
+
+        var email = Environment.GetEnvironmentVariable("QUICKER_EMAIL");
+        var password = Environment.GetEnvironmentVariable("QUICKER_PASSWORD");
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+        {
+            await EmitErrorAsync(
+                    options.Json,
+                    "MISSING_CREDENTIALS",
+                    "Set QUICKER_EMAIL and QUICKER_PASSWORD in .env or the environment.")
+                .ConfigureAwait(false);
+            return ExitCodes.Error;
+        }
+
+        var loginLogger = loggerFactory.CreateLogger<QuickerWebLoginService>();
+        var uploadLogger = loggerFactory.CreateLogger<ActionDescriptionUploadService>();
+        var loginService = new QuickerWebLoginService(loginLogger);
+        var uploadService = new ActionDescriptionUploadService(loginService, uploadLogger);
+        var settings = ActionDescriptionUploadSettings.FromEnvironment();
+
+        var result = await uploadService
+            .UploadHtmlAsync(record.CdpUrl, email, password, sharedId, htmlContent, settings, ct)
+            .ConfigureAwait(false);
+
+        if (!result.Ok)
+        {
+            await EmitErrorAsync(options.Json, result.ErrorCode ?? "UPLOAD_FAILED", result.Message ?? "Upload failed.")
+                .ConfigureAwait(false);
+            return ExitCodes.Error;
+        }
+
         if (options.Json)
         {
             global::System.Console.WriteLine(JsonSerializer.Serialize(
-                new { ok = false, error = "NOT_IMPLEMENTED", message = msg },
+                new
+                {
+                    ok = true,
+                    sessionId,
+                    sharedId,
+                    htmlPath,
+                    pageUrlTemplate = settings.PageUrlTemplate,
+                },
                 JsonWriteOptions));
         }
         else
         {
-            global::System.Console.Error.WriteLine(msg);
+            global::System.Console.WriteLine($"Uploaded description for shared action {sharedId} from {htmlPath}.");
         }
 
-        return Task.FromResult(ExitCodes.NotImplemented);
+        return ExitCodes.Success;
     }
 
     private static Task EmitErrorAsync(bool json, string code, string message)
@@ -368,14 +488,23 @@ public sealed class SessionOptions
     public bool Json { get; set; }
 }
 
-[Verb("action-doc", HelpText = "Read or write action documentation (placeholder).")]
+[Verb("action-doc", HelpText = "Upload HTML intro text for a shared action on getquicker.net.")]
 public sealed class ActionDocOptions
 {
-    [Value(0, MetaName = "action", Required = true, HelpText = "get | set")]
+    [Value(0, MetaName = "action", Required = true, HelpText = "upload")]
     public string? Action { get; set; }
 
-    [Option("id", HelpText = "Session id for future use when automation is implemented.")]
+    [Option("id", HelpText = "Browser session id (default: default or QUICKER_AGENT_SESSION_ID).")]
     public string? Id { get; set; }
+
+    [Option("code", HelpText = "Shared action id (GUID) when not using --dir.")]
+    public string? Code { get; set; }
+
+    [Option("html", HelpText = "Path to HTML file when not using --dir.")]
+    public string? Html { get; set; }
+
+    [Option("dir", HelpText = "Folder with manifest YAML + HTML (see README).")]
+    public string? Dir { get; set; }
 
     [Option("json", HelpText = "Emit JSON for automation.")]
     public bool Json { get; set; }

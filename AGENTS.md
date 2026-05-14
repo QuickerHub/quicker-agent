@@ -56,8 +56,7 @@ qkagent.exe session new --json
 | 退出码 | 含义 |
 |--------|------|
 | `0` | 成功 |
-| `1` | 错误（缺凭据、无会话文件、登录失败、`session status` 时 CDP 不可达等） |
-| `2` | 未实现（当前为 `action-doc`） |
+| `1` | 错误（缺凭据、无会话文件、登录失败、`session status` 时 CDP 不可达、`action-doc` 上传失败等） |
 
 常用命令：
 
@@ -65,8 +64,10 @@ qkagent.exe session new --json
 qkagent.exe session new [--id <name>] [--json]
 qkagent.exe session status [--id <name>] [--json]
 qkagent.exe session close [--id <name>] [--json]
-qkagent.exe action-doc get|set ...   # 当前恒为 NOT_IMPLEMENTED，退出码 2
+qkagent.exe action-doc upload (--code <sharedId> --html <path> | --dir <folder>) [--id <name>] [--json]
 ```
+
+动作说明：每个动作一个目录，内含 **YAML**（`sharedId` / `code` + 可选 `html` 相对路径）与 **HTML** 正文；或用 `--code` + `--html` 直接指定。须先 `session new`，且账号须为动作**作者**。可选 `QKAGENT_ACTION_DOC_*` 环境变量见 [env.example](env.example)。
 
 会话元数据（含 CDP URL，属敏感信息）默认在：
 

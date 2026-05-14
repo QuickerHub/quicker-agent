@@ -1,64 +1,38 @@
 ---
 name: quicker-agent-exe
 description: >-
-  Runs and interprets the qkagent.exe Windows CLI from the quicker-agent repo (getquicker.net
-  automation over CDP): session new/status/close, env vars, exit codes, and --json output.
-  Use when the user mentions qkagent.exe, quicker-agent repo, QKAGENT_CDP_URL, QKAGENT_COMMAND,
-  getquicker.net browser automation, CDP session files under LocalApplicationData, or
-  publish/publish-agent.ps1.
+  qkagent.exe on Windows: CDP session (session new/status/close) and action-doc upload
+  (HTML intro for getquicker.net shared actions). Use for QKAGENT_CDP_URL, publish/agent,
+  or publish/publish-agent.ps1.
 disable-model-invocation: false
 ---
 
-# qkagent.exe 使用说明（Skill）
+# qkagent.exe（精简）
 
-## 何时使用本 Skill
+## 何时用
 
-在需要**通过命令行**操作本仓库发布的 **`qkagent.exe`**（创建/检查/关闭浏览器 CDP 会话、自动登录 getquicker.net）时，先按本文件执行；细节与故障排查见仓库根目录的 [AGENTS.md](../../../AGENTS.md) 与 [README.md](../../../README.md)。
+需要在本机调用 **`qkagent.exe`**：建立/检查 CDP 会话、登录 getquicker.net、或**把本地 HTML 上传到已分享动作的简介**。
 
-## 前置条件
+## 前置
 
-- **Windows**：发布脚本与当前发布目标为 win-x64。
-- **可执行文件位置**：在仓库根执行 `publish/publish-agent.ps1` 后，主程序路径为 **`publish/agent/qkagent.exe`**（须保留**同目录全部依赖**，勿只拷贝单个 exe）。
-- **PATH**：脚本可能已将 `publish/agent` 加入**用户 PATH**；若命令未找到，让用户**新开终端**或用**绝对路径**调用 exe。
+- Windows，可执行文件：`publish/agent/qkagent.exe`（发布脚本生成，须**整目录**依赖）。
+- `.env`：`QUICKER_EMAIL`、`QUICKER_PASSWORD`；CDP 用 `QKAGENT_CDP_URL` 或 `QKAGENT_COMMAND`（勿让子进程指向本 `qkagent.exe`）。
 
-## 配置（执行前）
-
-1. 将 [env.example](../../../env.example) 复制为 **`.env`**，至少设置 **`QUICKER_EMAIL`**、**`QUICKER_PASSWORD`**。
-2. `.env` 放在 **`qkagent.exe` 同目录**，或当前工作目录及其向上若干级父目录（与程序加载逻辑一致）。
-3. **CDP 来源**二选一：
-   - 设置 **`QKAGENT_CDP_URL`**：直接使用已有 Chromium CDP 地址，**不**启动子进程；
-   - 或设置 **`QKAGENT_COMMAND`** 指向**另一个**可执行文件（默认名 **`qkagent-host`**），由其 stdout/stderr 在约 **120 秒**内输出可解析的 CDP URL。**禁止**让 `QKAGENT_COMMAND` 等于本 CLI 的 `qkagent.exe`（会自递归）。详见 README「CDP launcher contract」。
-
-## Agent 调用约定
-
-- **优先加 `--json`**：标准输出为单行 JSON，便于解析。
-- **以退出码判断结果**：`0` 成功，`1` 错误，`2` 未实现（当前 **`action-doc`** 恒为占位）。
-- **通过终端执行**本机上的 `qkagent.exe`，解析 stdout；勿假设跨机器路径。
-- **勿**在日志、issue、提交内容中粘贴完整 `.env`、会话 JSON 或 CDP URL。
-
-## 子命令速查
+## 命令
 
 | 子命令 | 作用 |
 |--------|------|
-| `session new [--id <name>] [--json]` | 解析 CDP → Playwright 连接 → 登录 → 写入 `%LOCALAPPDATA%/quicker-agent/sessions/<id>.json` |
-| `session status [--id <name>] [--json]` | 检查会话文件是否存在、CDP 是否仍可达（不可达时退出码 **1**） |
-| `session close [--id <name>] [--json]` | 仅删除本地会话元数据；**不**结束浏览器或外部 CDP 启动器 |
-| `action-doc get \| set ...` | 占位；退出码 **2**，JSON 中 `error` 为 `NOT_IMPLEMENTED` |
+| `session new \| status \| close` | 与 [AGENTS.md](../../../AGENTS.md) 一致 |
+| `action-doc upload` | 读 HTML，连已保存会话的浏览器，登录后打开动作页，写入 Summernote 并保存 |
 
-示例（发布目录下，机器可读）：
+上传二选一：
 
-```powershell
-./publish/agent/qkagent.exe session new --id default --json
-./publish/agent/qkagent.exe session status --id default --json
-```
+- `--code <sharedId> --html <文件路径>`
+- `--dir <文件夹>`：内含 `action.yaml`（或 `meta.yaml` / `manifest.yaml`），字段 `sharedId`（或 `code`），可选 `html`（默认 `description.html`）
 
-## 与仓库开发的关系
+优先加 **`--json`**；退出码 **0 成功，1 失败**。
 
-- 从源码调试：`dotnet run --project QuickerAgent.Console -- session new --json`（需在含 `.env` 的目录或设置环境变量）。
-- 构建解决方案：`dotnet build QuickerAgent.slnx`（需支持 SLNX 的 SDK）。
+## 文档
 
-## 进一步阅读
-
-- 面向 Agent 的逐步配置：[AGENTS.md](../../../AGENTS.md)
-- 功能列表、环境变量表、发布说明：[README.md](../../../README.md)
-- 修改代码后发布 `qkagent.exe`：[qkagent-publish-exe/SKILL.md](../qkagent-publish-exe/SKILL.md)
+- [AGENTS.md](../../../AGENTS.md)、[README.md](../../../README.md)、[env.example](../../../env.example) 中 `QKAGENT_ACTION_DOC_*`
+- 改代码后发布：[qkagent-publish-exe/SKILL.md](../qkagent-publish-exe/SKILL.md)

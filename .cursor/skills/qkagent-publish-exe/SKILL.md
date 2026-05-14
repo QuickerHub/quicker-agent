@@ -16,7 +16,7 @@ disable-model-invocation: false
 Run the publish script after edits that affect the shipped CLI or its publish layout, including:
 
 - `QuickerAgent.Console/` (entry, verbs, `Program.cs`)
-- `QuickerAgent.Core/` (Playwright, login, session, CDP launcher)
+- `QuickerAgent.Core/` (Playwright, login, session, CDP launcher, action-doc upload)
 - `QuickerAgent.Console.csproj` / `QuickerAgent.Core.csproj` / `QuickerAgent.slnx`
 - `publish/publish-agent.ps1`
 
