@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
     <ApplicationUTF8Encoding>true</ApplicationUTF8Encoding>
     <AssemblyName>qkagent</AssemblyName>
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
     <RootNamespace>QuickerAgent.Console</RootNamespace>
   </PropertyGroup>
 

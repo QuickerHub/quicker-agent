@@ -4,10 +4,14 @@ using Microsoft.Playwright;
 namespace QuickerAgent.Core;
 
 /// <summary>
-/// Connects over CDP, logs in, opens the shared-action page, fills Summernote HTML, and saves.
+/// Launches Chromium, logs in, opens the shared-action page, fills Summernote HTML, and saves.
+/// Same launch pattern as quicker_build_net <c>QuickerDependencyService</c>.
 /// </summary>
 public sealed class ActionDescriptionUploadService
 {
+    private const string DefaultUserAgent =
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+
     private readonly QuickerWebLoginService _loginService;
     private readonly ILogger<ActionDescriptionUploadService> _logger;
 
@@ -20,7 +24,6 @@ public sealed class ActionDescriptionUploadService
     }
 
     public async Task<ActionDescriptionUploadResult> UploadHtmlAsync(
-        string cdpUrl,
         string email,
         string password,
         string sharedActionCode,
@@ -28,7 +31,6 @@ public sealed class ActionDescriptionUploadService
         ActionDescriptionUploadSettings settings,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrEmpty(cdpUrl);
         ArgumentException.ThrowIfNullOrEmpty(email);
         ArgumentException.ThrowIfNullOrEmpty(password);
         ArgumentException.ThrowIfNullOrWhiteSpace(sharedActionCode);
@@ -38,18 +40,27 @@ public sealed class ActionDescriptionUploadService
         try
         {
             using var playwright = await Playwright.CreateAsync().ConfigureAwait(false);
-            await using var browser = await playwright.Chromium.ConnectOverCDPAsync(cdpUrl).ConfigureAwait(false);
+            await using var browser = await playwright.Chromium
+                .LaunchAsync(
+                    new BrowserTypeLaunchOptions
+                    {
+                        Headless = settings.Headless,
+                    })
+                .ConfigureAwait(false);
 
-            var context = browser.Contexts.Count > 0
-                ? browser.Contexts[0]
-                : await browser.NewContextAsync().ConfigureAwait(false);
+            await using var context = await browser.NewContextAsync(
+                    new BrowserNewContextOptions
+                    {
+                        ViewportSize = new ViewportSize { Width = 1280, Height = 800 },
+                        UserAgent = DefaultUserAgent,
+                    })
+                .ConfigureAwait(false);
 
-            var page = context.Pages.Count > 0
-                ? context.Pages[0]
-                : await context.NewPageAsync().ConfigureAwait(false);
-
+            var page = await context.NewPageAsync().ConfigureAwait(false);
             page.SetDefaultTimeout(60_000);
             page.SetDefaultNavigationTimeout(60_000);
+
+            _logger.LogInformation("Browser started (headless={Headless}).", settings.Headless);
 
             _logger.LogInformation("Logging in before opening action doc page.");
             var loggedIn = await _loginService.LoginAsync(page, email, password, cancellationToken).ConfigureAwait(false);

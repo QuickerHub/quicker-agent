@@ -32,6 +32,11 @@ public sealed class ActionDescriptionUploadSettings
     public string? SaveCssSelector { get; init; }
 
     /// <summary>
+    /// Run Chromium without UI. Default false (same as quicker_build_net dependency upload).
+    /// </summary>
+    public bool Headless { get; init; }
+
+    /// <summary>
     /// Builds settings from optional environment overrides.
     /// </summary>
     public static ActionDescriptionUploadSettings FromEnvironment()
@@ -41,6 +46,7 @@ public sealed class ActionDescriptionUploadSettings
         var editorWait = Environment.GetEnvironmentVariable("QKAGENT_ACTION_DOC_EDITOR_SELECTOR");
         var saveName = Environment.GetEnvironmentVariable("QKAGENT_ACTION_DOC_SAVE_BUTTON_TEXT");
         var saveCss = Environment.GetEnvironmentVariable("QKAGENT_ACTION_DOC_SAVE_SELECTOR");
+        var headlessRaw = Environment.GetEnvironmentVariable("QKAGENT_HEADLESS");
 
         return new ActionDescriptionUploadSettings
         {
@@ -53,7 +59,21 @@ public sealed class ActionDescriptionUploadSettings
                 : editorWait.Trim(),
             SaveButtonAccessibleName = string.IsNullOrWhiteSpace(saveName) ? "保存" : saveName.Trim(),
             SaveCssSelector = string.IsNullOrWhiteSpace(saveCss) ? null : saveCss.Trim(),
+            Headless = ParseTruthy(headlessRaw),
         };
+    }
+
+    private static bool ParseTruthy(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        value = value.Trim();
+        return value.Equals("1", StringComparison.Ordinal)
+               || value.Equals("true", StringComparison.OrdinalIgnoreCase)
+               || value.Equals("yes", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>

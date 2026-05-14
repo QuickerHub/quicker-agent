@@ -85,7 +85,7 @@ try {
     }
     else {
         Write-Host "No playwright.ps1 or Microsoft.Playwright.CLI.dll; skip browser install." -ForegroundColor Yellow
-        Write-Host "If you use CDP against an external browser (qkagent), you may not need this step." -ForegroundColor Cyan
+        Write-Host "action-doc upload needs Chromium installed for Playwright; run install when you add the CLI." -ForegroundColor Cyan
     }
 }
 catch {
@@ -103,9 +103,8 @@ if (Test-Path -LiteralPath $exePath) {
 
 Write-Host ""
 Write-Host "Examples:" -ForegroundColor Yellow
-Write-Host "  .\publish\agent\qkagent.exe session new --id default"
-Write-Host "  .\publish\agent\qkagent.exe session status --id default --json"
-Write-Host "  .\publish\agent\qkagent.exe session close --id default"
+Write-Host "  .\publish\agent\qkagent.exe action-doc upload --dir .\samples\action-doc --json"
+Write-Host "  .\publish\agent\qkagent.exe action-doc upload --code <guid> --html .\intro.html --json"
 Write-Host ""
 
 try {
@@ -130,6 +129,6 @@ else {
 }
 
 Write-Host ""
-Write-Host "When PATH includes the publish folder (open a new terminal): qkagent.exe session new" -ForegroundColor Cyan
+Write-Host "When PATH includes the publish folder (open a new terminal): qkagent.exe action-doc upload --dir ..." -ForegroundColor Cyan
 
 exit 0
