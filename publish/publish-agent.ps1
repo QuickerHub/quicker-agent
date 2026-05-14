@@ -29,7 +29,7 @@ function Get-QuickerAgentRepoRoot {
 $repoRoot = Get-QuickerAgentRepoRoot -StartPath $PSScriptRoot
 Set-Location -LiteralPath $repoRoot
 
-Write-Host "Publishing quicker-agent (non-single-file, win-x64, self-contained)..." -ForegroundColor Green
+Write-Host "Publishing qkagent.exe (QuickerAgent.Console, non-single-file, win-x64, self-contained)..." -ForegroundColor Green
 
 $publishDir = Join-Path $repoRoot 'publish\agent'
 if (Test-Path -LiteralPath $publishDir) {
@@ -130,6 +130,6 @@ else {
 }
 
 Write-Host ""
-Write-Host "User PATH: publish\agent folder is appended when missing (restart terminal). Then run: qkagent.exe session new" -ForegroundColor Cyan
+Write-Host "When PATH includes the publish folder (open a new terminal): qkagent.exe session new" -ForegroundColor Cyan
 
 exit 0

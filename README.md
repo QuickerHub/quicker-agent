@@ -2,32 +2,32 @@
 
 Command-line tool for automating [getquicker.net](https://getquicker.net) in a **single persistent browser session** (Chrome DevTools Protocol). It is intended to be invoked repeatedly by an **AI agent** or scripts: stable verbs, exit codes, and optional `--json` output.
 
-**AI / automation agents:** read **[AGENTS.md](AGENTS.md)** first (exe location, PATH, `.env`, exit codes, `--json`). Cursor **project skill** (auto-discovery when relevant): **[`.cursor/skills/quicker-agent-exe/SKILL.md`](.cursor/skills/quicker-agent-exe/SKILL.md)**.
+**AI / automation agents:** read **[AGENTS.md](AGENTS.md)** first (exe `qkagent.exe`, PATH, `.env`, exit codes, `--json`). Cursor **project skills:** [`.cursor/skills/quicker-agent-exe/SKILL.md`](.cursor/skills/quicker-agent-exe/SKILL.md) (CLI usage), [`.cursor/skills/qkagent-publish-exe/SKILL.md`](.cursor/skills/qkagent-publish-exe/SKILL.md) (publish after code changes).
 
 ## Features (current)
 
-- **`session new`** — Resolve a CDP endpoint (from `QKAGENT_CDP_URL` or by running `qkagent`), connect with Playwright, **log in** using the same selectors as the `QuickerDependencyService` login flow in the local **quicker_build_net** repository, then save session metadata under `%LOCALAPPDATA%\quicker-agent\sessions\`.
+- **`session new`** — Resolve a CDP endpoint (from `QKAGENT_CDP_URL` or by running `QKAGENT_COMMAND`, default **`qkagent-host`**), connect with Playwright, **log in** using the same selectors as the `QuickerDependencyService` login flow in the local **quicker_build_net** repository, then save session metadata under `%LOCALAPPDATA%\quicker-agent\sessions\`.
 - **`session status`** — Load the session file and check whether the CDP endpoint is still reachable.
-- **`session close`** — Delete the local session metadata file (does **not** terminate the browser / `qkagent` process).
+- **`session close`** — Delete the local session metadata file (does **not** terminate the browser or the external CDP launcher process).
 - **`action-doc`** — Placeholder for future read/write of action documentation (`exit code 2` = not implemented).
 
 ## Requirements
 
 - .NET 8 SDK (for development and `dotnet run`). The repo uses **`QuickerAgent.slnx`** (XML solution); build with `dotnet build QuickerAgent.slnx`. Opening or building `.slnx` requires a compatible .NET SDK (9.0.200+; tested with .NET 10).
 - Windows x64 for the provided publish script (same layout as `quicker_build_net`).
-- Playwright **Chromium** when you rely on this process to launch/control its own browser build (`dotnet publish` output includes Playwright CLI; run `install chromium` as in the publish script). If you only **attach** to a browser started by `qkagent`, you may not need the Playwright browser install.
+- Playwright **Chromium** when you rely on this process to launch/control its own browser build (`dotnet publish` output includes Playwright CLI; run `install chromium` as in the publish script). If you only **attach** over CDP to a browser started elsewhere, you may not need the Playwright browser install.
 
 ## Configuration
 
-1. Copy [`env.example`](env.example) to `.env` next to `quicker-agent.exe` or in the current / parent directories (the loader walks up a few levels, same idea as `quicker_build_net`).
+1. Copy [`env.example`](env.example) to `.env` next to `qkagent.exe` or in the current / parent directories (the loader walks up a few levels, same idea as `quicker_build_net`).
 2. Set at least:
 
 | Variable | Description |
 |----------|-------------|
 | `QUICKER_EMAIL` | getquicker.net account email |
 | `QUICKER_PASSWORD` | Account password |
-| `QKAGENT_CDP_URL` | *(optional)* WebSocket or HTTP CDP URL; if set, **`qkagent` is not spawned** (useful for tests or custom launchers). |
-| `QKAGENT_COMMAND` | *(optional)* Executable to spawn when `QKAGENT_CDP_URL` is unset (default: `qkagent`). |
+| `QKAGENT_CDP_URL` | *(optional)* WebSocket or HTTP CDP URL; if set, **no** `QKAGENT_COMMAND` process is spawned. |
+| `QKAGENT_COMMAND` | *(optional)* Executable to spawn when `QKAGENT_CDP_URL` is unset (default: **`qkagent-host`** — must not be this CLI's `qkagent.exe`). |
 | `QKAGENT_SESSION_NEW_ARGS` | *(optional)* Extra arguments for that executable. |
 | `QUICKER_AGENT_SESSION_ID` | *(optional)* Default session id when `--id` is omitted (default: `default`). |
 | `QUICKER_AGENT_SESSION_DIR` | *(optional)* Override directory for session JSON files. |
@@ -37,17 +37,17 @@ Command-line tool for automating [getquicker.net](https://getquicker.net) in a *
 ## Usage
 
 ```powershell
-# Create session, run qkagent (unless QKAGENT_CDP_URL is set), log in, save metadata
-.\quicker-agent.exe session new --id mysession
+# Create session (CDP from QKAGENT_CDP_URL or QKAGENT_COMMAND), log in, save metadata
+.\qkagent.exe session new --id mysession
 
 # Machine-readable
-.\quicker-agent.exe session new --id mysession --json
+.\qkagent.exe session new --id mysession --json
 
 # Check CDP still works
-.\quicker-agent.exe session status --id mysession --json
+.\qkagent.exe session status --id mysession --json
 
 # Remove local metadata only
-.\quicker-agent.exe session close --id mysession
+.\qkagent.exe session close --id mysession
 ```
 
 ### Exit codes
@@ -66,17 +66,21 @@ From the repository root:
 .\publish\publish-agent.ps1
 ```
 
-Output: `publish\agent\quicker-agent.exe` plus dependencies. The script optionally copies `.env`, copies `env.example`, runs `pwsh -File playwright.ps1 install chromium` when `playwright.ps1` is present in the output folder (or falls back to `Microsoft.Playwright.CLI.dll`), and appends the publish folder to the user `PATH` when missing.
+**Agent workflow:** after substantive code changes to the console/core/publish script, run the above (or follow **[`.cursor/skills/qkagent-publish-exe/SKILL.md`](.cursor/skills/qkagent-publish-exe/SKILL.md)**) so `publish/agent/qkagent.exe` stays in sync unless the user opts out.
+
+Output: `publish\agent\qkagent.exe` plus dependencies. The script optionally copies `.env`, copies `env.example`, runs `pwsh -File playwright.ps1 install chromium` when `playwright.ps1` is present in the output folder (or falls back to `Microsoft.Playwright.CLI.dll`), and **appends `publish\agent` to the user `PATH`** when missing so you can run `qkagent.exe` from any terminal (restart the terminal after first publish).
 
 ## Repository
 
 Upstream: [https://github.com/QuickerHub/quicker-agent](https://github.com/QuickerHub/quicker-agent)
 
-## `qkagent` contract
+## CDP launcher contract (`QKAGENT_COMMAND`)
 
-The launcher waits up to **120 seconds** for a line on **stdout or stderr** that contains:
+The shipped CLI is **`qkagent.exe`**. It must not spawn itself: either set **`QKAGENT_CDP_URL`**, or set **`QKAGENT_COMMAND`** to a *different* executable that prints a CDP URL (default command name is **`qkagent-host`** — put your real browser-launcher there or override `QKAGENT_COMMAND` to its full path).
+
+That launcher process waits up to **120 seconds** for a line on **stdout or stderr** that contains:
 
 - A JSON object with a `cdp` string property, e.g. `{"cdp":"ws://127.0.0.1:9222/devtools/browser/..."}`, or  
 - A plain `http(s)://` or `ws(s)://` URL.
 
-If your `qkagent` prints the URL differently, set `QKAGENT_CDP_URL` or adjust `QKAGENT_COMMAND` / arguments and output format.
+If your CDP launcher prints the URL differently, set `QKAGENT_CDP_URL` or adjust `QKAGENT_COMMAND` / arguments and output format.
