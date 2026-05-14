@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="QuickerAgent.Core/QuickerAgent.Core.csproj" />
+  <Project Path="QuickerAgent.Console/QuickerAgent.Console.csproj" />
+</Solution>

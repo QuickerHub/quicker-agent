@@ -1,0 +1,25 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+[Dd]ebug/
+[Rr]elease/
+# Publish output (script lives under publish/*.ps1)
+publish/agent/
+
+## Env / secrets
+.env
+.env.*
+!.env.example
+
+## OS
+Thumbs.db
+Desktop.ini
+
+## IDE
+.vs/
+.idea/
+*.swp
