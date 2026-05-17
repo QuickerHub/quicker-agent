@@ -13,251 +13,379 @@ namespace QuickerAgent.Console;
 /// </summary>
 public static class ExitCodes
 {
-    public const int Success = 0;
-    public const int Error = 1;
+  public const int Success = 0;
+  public const int Error = 1;
 }
 
 internal static class Program
 {
-    private static readonly JsonSerializerOptions JsonWriteOptions = new()
+  private static readonly JsonSerializerOptions JsonWriteOptions = new()
+  {
+    WriteIndented = false,
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+  };
+
+  private static async Task<int> Main(string[] args)
+  {
+    ConfigureConsoleUtf8();
+    LoadEnvironmentVariables();
+
+    using var loggerFactory = LoggerFactory.Create(static b =>
     {
-        WriteIndented = false,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+      b.SetMinimumLevel(LogLevel.Information);
+      b.AddSimpleConsole(o =>
+      {
+        o.SingleLine = true;
+        o.TimestampFormat = "HH:mm:ss ";
+      });
+    });
+
+    var result = Parser.Default.ParseArguments<ActionDocOptions>(args);
+    return await result
+      .MapResult(
+        (ActionDocOptions o) => RunActionDocAsync(o, loggerFactory),
+        _ => Task.FromResult(ExitCodes.Error))
+      .ConfigureAwait(false);
+  }
+
+  private static void ConfigureConsoleUtf8()
+  {
+    try
+    {
+      var utf8NoBom = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+      global::System.Console.OutputEncoding = utf8NoBom;
+      global::System.Console.InputEncoding = utf8NoBom;
+    }
+    catch
+    {
+      // ignore
+    }
+  }
+
+  private static void LoadEnvironmentVariables()
+  {
+    try
+    {
+      var exeDir = Path.GetDirectoryName(Environment.ProcessPath) ?? Environment.CurrentDirectory;
+      var envPath = Path.Combine(exeDir, ".env");
+      if (File.Exists(envPath))
+      {
+        Env.Load(envPath);
+        global::System.Console.WriteLine($"Loaded env file: {envPath}");
+        return;
+      }
+
+      var currentDir = Environment.CurrentDirectory;
+      for (var i = 0; i < 5; i++)
+      {
+        envPath = Path.Combine(currentDir, ".env");
+        if (File.Exists(envPath))
+        {
+          Env.Load(envPath);
+          global::System.Console.WriteLine($"Loaded env file: {envPath}");
+          return;
+        }
+
+        var parentDir = Directory.GetParent(currentDir);
+        if (parentDir is null)
+        {
+          break;
+        }
+
+        currentDir = parentDir.FullName;
+      }
+    }
+    catch (Exception ex)
+    {
+      global::System.Console.Error.WriteLine($"Failed to load .env: {ex.Message}");
+    }
+  }
+
+  private static async Task<int> RunActionDocAsync(ActionDocOptions options, ILoggerFactory loggerFactory)
+  {
+    var verb = (options.Action ?? string.Empty).Trim().ToLowerInvariant();
+    return verb switch
+    {
+      "get" => await RunActionDocGetAsync(options, loggerFactory).ConfigureAwait(false),
+      "upload" or "set" => await RunActionDocUploadAsync(options, loggerFactory).ConfigureAwait(false),
+      _ => await UnknownVerbAsync(options).ConfigureAwait(false),
     };
+  }
 
-    private static async Task<int> Main(string[] args)
+  private static async Task<int> UnknownVerbAsync(ActionDocOptions options)
+  {
+    await EmitErrorAsync(
+        options.Json,
+        "UNKNOWN_ACTION_DOC_VERB",
+        "Use: action-doc get|upload|set (--code <sharedId> [--html <path>] | --dir <folder>) [--json]")
+      .ConfigureAwait(false);
+    return ExitCodes.Error;
+  }
+
+  private static (string SharedId, string HtmlPath) ResolveTargets(
+    ActionDocOptions options,
+    bool requireHtmlInput)
+  {
+    if (!string.IsNullOrWhiteSpace(options.Dir))
     {
-        ConfigureConsoleUtf8();
-        LoadEnvironmentVariables();
+      var dir = Path.GetFullPath(options.Dir);
+      var manifest = ActionManifestReader.FindManifestPath(dir);
+      if (manifest is null)
+      {
+        throw new InvalidOperationException(
+          $"No action.yaml / meta.yaml / manifest.yaml under '{dir}'.");
+      }
 
-        using var loggerFactory = LoggerFactory.Create(static b =>
-        {
-            b.SetMinimumLevel(LogLevel.Information);
-            b.AddSimpleConsole(o =>
-            {
-                o.SingleLine = true;
-                o.TimestampFormat = "HH:mm:ss ";
-            });
-        });
-
-        var result = Parser.Default.ParseArguments<ActionDocOptions>(args);
-        return await result.MapResult(
-                (ActionDocOptions o) => RunActionDocAsync(o, loggerFactory),
-                _ => Task.FromResult(ExitCodes.Error))
-            .ConfigureAwait(false);
+      var (id, htmlRel) = ActionManifestReader.Read(manifest, defaultHtmlFile: "description.html");
+      var htmlPath = Path.GetFullPath(Path.Combine(dir, htmlRel));
+      return (id, htmlPath);
     }
 
-    private static void ConfigureConsoleUtf8()
+    if (!string.IsNullOrWhiteSpace(options.Code))
     {
-        try
+      var sharedId = options.Code.Trim();
+      if (requireHtmlInput)
+      {
+        if (string.IsNullOrWhiteSpace(options.Html))
         {
-            var utf8NoBom = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
-            global::System.Console.OutputEncoding = utf8NoBom;
-            global::System.Console.InputEncoding = utf8NoBom;
+          throw new InvalidOperationException("Provide --html <path> when using --code for upload/set.");
         }
-        catch
-        {
-            // ignore
-        }
+
+        return (sharedId, Path.GetFullPath(options.Html));
+      }
+
+      var outPath = string.IsNullOrWhiteSpace(options.Out)
+        ? Path.Combine(Environment.CurrentDirectory, "description.html")
+        : Path.GetFullPath(options.Out);
+      return (sharedId, outPath);
     }
 
-    private static void LoadEnvironmentVariables()
+    throw new InvalidOperationException(
+      "Provide --dir <folder> with manifest YAML, or --code <sharedId> (and --html for upload).");
+  }
+
+  private static async Task<int> RunActionDocGetAsync(ActionDocOptions options, ILoggerFactory loggerFactory)
+  {
+    string sharedId;
+    string outputPath;
+
+    try
     {
-        try
-        {
-            var exeDir = Path.GetDirectoryName(Environment.ProcessPath) ?? Environment.CurrentDirectory;
-            var envPath = Path.Combine(exeDir, ".env");
-            if (File.Exists(envPath))
-            {
-                Env.Load(envPath);
-                global::System.Console.WriteLine($"Loaded env file: {envPath}");
-                return;
-            }
-
-            var currentDir = Environment.CurrentDirectory;
-            for (var i = 0; i < 5; i++)
-            {
-                envPath = Path.Combine(currentDir, ".env");
-                if (File.Exists(envPath))
-                {
-                    Env.Load(envPath);
-                    global::System.Console.WriteLine($"Loaded env file: {envPath}");
-                    return;
-                }
-
-                var parentDir = Directory.GetParent(currentDir);
-                if (parentDir is null)
-                {
-                    break;
-                }
-
-                currentDir = parentDir.FullName;
-            }
-        }
-        catch (Exception ex)
-        {
-            global::System.Console.Error.WriteLine($"Failed to load .env: {ex.Message}");
-        }
+      (sharedId, outputPath) = ResolveTargets(options, requireHtmlInput: false);
+    }
+    catch (Exception ex)
+    {
+      await EmitErrorAsync(options.Json, "ACTION_DOC_MANIFEST_ERROR", ex.Message).ConfigureAwait(false);
+      return ExitCodes.Error;
     }
 
-    private static async Task<int> RunActionDocAsync(ActionDocOptions options, ILoggerFactory loggerFactory)
+    if (!TryGetCredentials(options.Json, out var email, out var password))
     {
-        var verb = (options.Action ?? string.Empty).Trim().ToLowerInvariant();
-        if (verb != "upload")
-        {
-            await EmitErrorAsync(
-                    options.Json,
-                    "UNKNOWN_ACTION_DOC_VERB",
-                    "Use: action-doc upload (--code <sharedId> --html <path> | --dir <folder>)")
-                .ConfigureAwait(false);
-            return ExitCodes.Error;
-        }
-
-        string sharedId;
-        string htmlPath;
-
-        try
-        {
-            if (!string.IsNullOrWhiteSpace(options.Dir))
-            {
-                var dir = Path.GetFullPath(options.Dir);
-                var manifest = ActionManifestReader.FindManifestPath(dir);
-                if (manifest is null)
-                {
-                    await EmitErrorAsync(
-                            options.Json,
-                            "MANIFEST_NOT_FOUND",
-                            $"No action.yaml / meta.yaml / manifest.yaml under '{dir}'.")
-                        .ConfigureAwait(false);
-                    return ExitCodes.Error;
-                }
-
-                var (id, htmlRel) = ActionManifestReader.Read(manifest, defaultHtmlFile: "description.html");
-                sharedId = id;
-                htmlPath = Path.GetFullPath(Path.Combine(dir, htmlRel));
-            }
-            else if (!string.IsNullOrWhiteSpace(options.Code) && !string.IsNullOrWhiteSpace(options.Html))
-            {
-                sharedId = options.Code.Trim();
-                htmlPath = Path.GetFullPath(options.Html);
-            }
-            else
-            {
-                await EmitErrorAsync(
-                        options.Json,
-                        "MISSING_ARGUMENTS",
-                        "Provide --dir <folder> with manifest YAML, or both --code <sharedId> and --html <path>.")
-                    .ConfigureAwait(false);
-                return ExitCodes.Error;
-            }
-        }
-        catch (Exception ex)
-        {
-            await EmitErrorAsync(options.Json, "ACTION_DOC_MANIFEST_ERROR", ex.Message).ConfigureAwait(false);
-            return ExitCodes.Error;
-        }
-
-        if (!File.Exists(htmlPath))
-        {
-            await EmitErrorAsync(options.Json, "HTML_NOT_FOUND", $"HTML file not found: {htmlPath}")
-                .ConfigureAwait(false);
-            return ExitCodes.Error;
-        }
-
-        string htmlContent;
-        try
-        {
-            htmlContent = await File.ReadAllTextAsync(htmlPath).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            await EmitErrorAsync(options.Json, "HTML_READ_ERROR", ex.Message).ConfigureAwait(false);
-            return ExitCodes.Error;
-        }
-
-        var email = Environment.GetEnvironmentVariable("QUICKER_EMAIL");
-        var password = Environment.GetEnvironmentVariable("QUICKER_PASSWORD");
-        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
-        {
-            await EmitErrorAsync(
-                    options.Json,
-                    "MISSING_CREDENTIALS",
-                    "Set QUICKER_EMAIL and QUICKER_PASSWORD in .env or the environment.")
-                .ConfigureAwait(false);
-            return ExitCodes.Error;
-        }
-
-        var ct = CancellationToken.None;
-        var loginLogger = loggerFactory.CreateLogger<QuickerWebLoginService>();
-        var uploadLogger = loggerFactory.CreateLogger<ActionDescriptionUploadService>();
-        var loginService = new QuickerWebLoginService(loginLogger);
-        var uploadService = new ActionDescriptionUploadService(loginService, uploadLogger);
-        var settings = ActionDescriptionUploadSettings.FromEnvironment();
-
-        var result = await uploadService
-            .UploadHtmlAsync(email, password, sharedId, htmlContent, settings, ct)
-            .ConfigureAwait(false);
-
-        if (!result.Ok)
-        {
-            await EmitErrorAsync(options.Json, result.ErrorCode ?? "UPLOAD_FAILED", result.Message ?? "Upload failed.")
-                .ConfigureAwait(false);
-            return ExitCodes.Error;
-        }
-
-        if (options.Json)
-        {
-            global::System.Console.WriteLine(JsonSerializer.Serialize(
-                new
-                {
-                    ok = true,
-                    sharedId,
-                    htmlPath,
-                    headless = settings.Headless,
-                    pageUrlTemplate = settings.PageUrlTemplate,
-                },
-                JsonWriteOptions));
-        }
-        else
-        {
-            global::System.Console.WriteLine($"Uploaded description for shared action {sharedId} from {htmlPath}.");
-        }
-
-        return ExitCodes.Success;
+      return ExitCodes.Error;
     }
 
-    private static Task EmitErrorAsync(bool json, string code, string message)
-    {
-        if (json)
-        {
-            global::System.Console.WriteLine(JsonSerializer.Serialize(
-                new { ok = false, error = code, message },
-                JsonWriteOptions));
-        }
-        else
-        {
-            global::System.Console.Error.WriteLine($"{code}: {message}");
-        }
+    var agentSettings = QuickerAgentSettings.FromEnvironment();
+    var pageSettings = ActionDescriptionUploadSettings.FromEnvironment();
+    var loginLogger = loggerFactory.CreateLogger<QuickerWebLoginService>();
+    var docLogger = loggerFactory.CreateLogger<ActionDescriptionService>();
+    var service = new ActionDescriptionService(new QuickerWebLoginService(loginLogger), docLogger);
 
-        return Task.CompletedTask;
+    var result = await service
+      .GetHtmlAsync(email, password, sharedId, pageSettings, agentSettings, CancellationToken.None)
+      .ConfigureAwait(false);
+
+    if (!result.Ok || string.IsNullOrEmpty(result.Html))
+    {
+      await EmitErrorAsync(
+          options.Json,
+          result.ErrorCode ?? "GET_FAILED",
+          result.Message ?? "Failed to fetch description HTML.")
+        .ConfigureAwait(false);
+      return ExitCodes.Error;
     }
+
+    try
+    {
+      var outDir = Path.GetDirectoryName(outputPath);
+      if (!string.IsNullOrEmpty(outDir))
+      {
+        Directory.CreateDirectory(outDir);
+      }
+
+      await File.WriteAllTextAsync(outputPath, result.Html).ConfigureAwait(false);
+    }
+    catch (Exception ex)
+    {
+      await EmitErrorAsync(options.Json, "HTML_WRITE_ERROR", ex.Message).ConfigureAwait(false);
+      return ExitCodes.Error;
+    }
+
+    if (options.Json)
+    {
+      global::System.Console.WriteLine(JsonSerializer.Serialize(
+        new
+        {
+          ok = true,
+          action = "get",
+          sharedId,
+          outputPath,
+          htmlLength = result.Html.Length,
+          browserChannel = agentSettings.BrowserChannel,
+          profileDirectory = agentSettings.ProfileDirectory,
+          headless = agentSettings.Headless,
+        },
+        JsonWriteOptions));
+    }
+    else
+    {
+      global::System.Console.WriteLine($"Saved description for {sharedId} to {outputPath}.");
+    }
+
+    return ExitCodes.Success;
+  }
+
+  private static async Task<int> RunActionDocUploadAsync(ActionDocOptions options, ILoggerFactory loggerFactory)
+  {
+    string sharedId;
+    string htmlPath;
+
+    try
+    {
+      (sharedId, htmlPath) = ResolveTargets(options, requireHtmlInput: true);
+    }
+    catch (Exception ex)
+    {
+      await EmitErrorAsync(options.Json, "ACTION_DOC_MANIFEST_ERROR", ex.Message).ConfigureAwait(false);
+      return ExitCodes.Error;
+    }
+
+    if (!File.Exists(htmlPath))
+    {
+      await EmitErrorAsync(options.Json, "HTML_NOT_FOUND", $"HTML file not found: {htmlPath}")
+        .ConfigureAwait(false);
+      return ExitCodes.Error;
+    }
+
+    string htmlContent;
+    try
+    {
+      htmlContent = await File.ReadAllTextAsync(htmlPath).ConfigureAwait(false);
+    }
+    catch (Exception ex)
+    {
+      await EmitErrorAsync(options.Json, "HTML_READ_ERROR", ex.Message).ConfigureAwait(false);
+      return ExitCodes.Error;
+    }
+
+    if (!TryGetCredentials(options.Json, out var email, out var password))
+    {
+      return ExitCodes.Error;
+    }
+
+    var agentSettings = QuickerAgentSettings.FromEnvironment();
+    var pageSettings = ActionDescriptionUploadSettings.FromEnvironment();
+    var loginLogger = loggerFactory.CreateLogger<QuickerWebLoginService>();
+    var docLogger = loggerFactory.CreateLogger<ActionDescriptionService>();
+    var service = new ActionDescriptionService(new QuickerWebLoginService(loginLogger), docLogger);
+
+    var result = await service
+      .SetHtmlAsync(email, password, sharedId, htmlContent, pageSettings, agentSettings, CancellationToken.None)
+      .ConfigureAwait(false);
+
+    if (!result.Ok)
+    {
+      await EmitErrorAsync(options.Json, result.ErrorCode ?? "UPLOAD_FAILED", result.Message ?? "Upload failed.")
+        .ConfigureAwait(false);
+      return ExitCodes.Error;
+    }
+
+    if (options.Json)
+    {
+      global::System.Console.WriteLine(JsonSerializer.Serialize(
+        new
+        {
+          ok = true,
+          action = "upload",
+          sharedId,
+          htmlPath,
+          headless = agentSettings.Headless,
+          profileDirectory = agentSettings.ProfileDirectory,
+          pageUrlTemplate = pageSettings.PageUrlTemplate,
+        },
+        JsonWriteOptions));
+    }
+    else
+    {
+      global::System.Console.WriteLine($"Uploaded description for shared action {sharedId} from {htmlPath}.");
+    }
+
+    return ExitCodes.Success;
+  }
+
+  private static bool TryGetCredentials(bool json, out string email, out string password)
+  {
+    email = Environment.GetEnvironmentVariable("QUICKER_EMAIL") ?? string.Empty;
+    password = Environment.GetEnvironmentVariable("QUICKER_PASSWORD") ?? string.Empty;
+    if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+    {
+      if (json)
+      {
+        global::System.Console.WriteLine(JsonSerializer.Serialize(
+          new
+          {
+            ok = false,
+            error = "MISSING_CREDENTIALS",
+            message = "Set QUICKER_EMAIL and QUICKER_PASSWORD in .env or the environment.",
+          },
+          JsonWriteOptions));
+      }
+      else
+      {
+        global::System.Console.Error.WriteLine(
+          "MISSING_CREDENTIALS: Set QUICKER_EMAIL and QUICKER_PASSWORD in .env or the environment.");
+      }
+
+      return false;
+    }
+
+    return true;
+  }
+
+  private static Task EmitErrorAsync(bool json, string code, string message)
+  {
+    if (json)
+    {
+      global::System.Console.WriteLine(JsonSerializer.Serialize(
+        new { ok = false, error = code, message },
+        JsonWriteOptions));
+    }
+    else
+    {
+      global::System.Console.Error.WriteLine($"{code}: {message}");
+    }
+
+    return Task.CompletedTask;
+  }
 }
 
-[Verb("action-doc", HelpText = "Upload HTML intro text for a shared action on getquicker.net.")]
+[Verb("action-doc", HelpText = "Get or update HTML intro text for a shared action on getquicker.net.")]
 public sealed class ActionDocOptions
 {
-    [Value(0, MetaName = "action", Required = true, HelpText = "upload")]
-    public string? Action { get; set; }
+  [Value(0, MetaName = "action", Required = true, HelpText = "get | upload | set")]
+  public string? Action { get; set; }
 
-    [Option("code", HelpText = "Shared action id (GUID) when not using --dir.")]
-    public string? Code { get; set; }
+  [Option("code", HelpText = "Shared action id (GUID) when not using --dir.")]
+  public string? Code { get; set; }
 
-    [Option("html", HelpText = "Path to HTML file when not using --dir.")]
-    public string? Html { get; set; }
+  [Option("html", HelpText = "Path to HTML file for upload/set when not using --dir.")]
+  public string? Html { get; set; }
 
-    [Option("dir", HelpText = "Folder with manifest YAML + HTML (see README).")]
-    public string? Dir { get; set; }
+  [Option("dir", HelpText = "Folder with manifest YAML + description.html.")]
+  public string? Dir { get; set; }
 
-    [Option("json", HelpText = "Emit JSON for automation.")]
-    public bool Json { get; set; }
+  [Option("out", HelpText = "Output HTML path for get when using --code (default: ./description.html).")]
+  public string? Out { get; set; }
+
+  [Option("json", HelpText = "Emit JSON for automation.")]
+  public bool Json { get; set; }
 }

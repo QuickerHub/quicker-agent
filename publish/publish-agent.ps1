@@ -85,7 +85,7 @@ try {
     }
     else {
         Write-Host "No playwright.ps1 or Microsoft.Playwright.CLI.dll; skip browser install." -ForegroundColor Yellow
-        Write-Host "action-doc upload needs Chromium installed for Playwright; run install when you add the CLI." -ForegroundColor Cyan
+        Write-Host "action-doc needs Chrome/Edge or Playwright Chromium; run install when you add the CLI." -ForegroundColor Cyan
     }
 }
 catch {
@@ -103,7 +103,7 @@ if (Test-Path -LiteralPath $exePath) {
 
 Write-Host ""
 Write-Host "Examples:" -ForegroundColor Yellow
-Write-Host "  .\publish\agent\qkagent.exe action-doc upload --dir .\samples\action-doc --json"
+Write-Host "  .\publish\agent\qkagent.exe action-doc get --dir .\samples\action-doc --json"
 Write-Host "  .\publish\agent\qkagent.exe action-doc upload --code <guid> --html .\intro.html --json"
 Write-Host ""
 

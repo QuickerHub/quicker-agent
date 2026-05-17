@@ -1,6 +1,6 @@
 # quicker-agent
 
-Command-line tool to **upload HTML** for a [getquicker.net](https://getquicker.net) shared action’s web intro. It starts **Chromium via Playwright** (same launch pattern as `QuickerDependencyService` in **quicker_build_net**: `Chromium.LaunchAsync`, headed by default), logs in, fills the Summernote editor, and saves.
+Command-line tool to **get or update HTML** for a [getquicker.net](https://getquicker.net) shared action’s web intro. It uses **Playwright** with a **persistent browser profile**, preferring **system Chrome or Edge**, then bundled Chromium. After the first successful login, cookies are reused until the session expires (then the tool logs in again automatically).
 
 **Automation agents:** read **[AGENTS.md](AGENTS.md)** first. Cursor skills: [`.cursor/skills/quicker-agent-exe/SKILL.md`](.cursor/skills/quicker-agent-exe/SKILL.md), [`.cursor/skills/qkagent-publish-exe/SKILL.md`](.cursor/skills/qkagent-publish-exe/SKILL.md).
 
@@ -8,7 +8,7 @@ Command-line tool to **upload HTML** for a [getquicker.net](https://getquicker.n
 
 - .NET 8 SDK for `dotnet run` / `dotnet build QuickerAgent.slnx` (SLNX needs a recent SDK, e.g. 9.0.200+).
 - Windows x64 for `publish/publish-agent.ps1`.
-- Playwright **Chromium** installed for the published app (the publish script runs `playwright.ps1 install chromium` when present).
+- **Google Chrome** or **Microsoft Edge** recommended (used first). Playwright **Chromium** is installed as fallback when you run the publish script.
 
 ## Configuration
 
@@ -18,7 +18,9 @@ Command-line tool to **upload HTML** for a [getquicker.net](https://getquicker.n
 |----------|-------------|
 | `QUICKER_EMAIL` | getquicker.net account (**must own** the shared action to see the editor). |
 | `QUICKER_PASSWORD` | Account password. |
-| `QKAGENT_HEADLESS` | Optional: `1` / `true` to run Chromium headless (default: headed window). |
+| `QKAGENT_HEADLESS` | Optional: `1` / `true` to run without a window (default: headed). |
+| `QKAGENT_PROFILE_DIR` | Optional: persistent browser profile path (cookies). Default: `%LOCALAPPDATA%\qkagent\browser-profile`. |
+| `QKAGENT_BROWSER_CHANNEL` | Optional: force `chrome`, `msedge`, or `chromium`. Default: try Chrome → Edge → Chromium. |
 | `QKAGENT_ACTION_DOC_*` | Optional overrides for page URL, editor/save selectors — see `env.example`. |
 
 Do not commit `.env`.
@@ -26,11 +28,15 @@ Do not commit `.env`.
 ## Usage
 
 ```powershell
-# Machine-readable
-.\qkagent.exe action-doc upload --code "<shared-guid>" --html .\intro.html --json
+# Fetch intro HTML from the site
+.\qkagent.exe action-doc get --code "<shared-guid>" --out .\intro.html --json
 
-# Folder with action.yaml + description.html
-.\qkagent.exe action-doc upload --dir .\samples\action-doc --json
+# Fetch using action folder (writes manifest html path, default description.html)
+.\qkagent.exe action-doc get --dir .\samples\action-doc --json
+
+# Upload / update intro HTML
+.\qkagent.exe action-doc upload --code "<shared-guid>" --html .\intro.html --json
+.\qkagent.exe action-doc set --dir .\samples\action-doc --json
 ```
 
 ### Exit codes
@@ -45,7 +51,7 @@ Do not commit `.env`.
 | File | Purpose |
 |------|---------|
 | `action.yaml` (or `meta.yaml` / `manifest.yaml`) | `sharedId` or `code`; optional `html` path (default `description.html`). |
-| `description.html` | HTML for the intro. |
+| `description.html` | HTML for the intro (`get` writes here; `upload` reads from here). |
 
 Example: [samples/action-doc/](samples/action-doc/).
 
