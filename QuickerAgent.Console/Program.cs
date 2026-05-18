@@ -19,6 +19,8 @@ public static class ExitCodes
 
 internal static class Program
 {
+  private static readonly UTF8Encoding Utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
+
   private static readonly JsonSerializerOptions JsonWriteOptions = new()
   {
     WriteIndented = false,
@@ -107,7 +109,9 @@ internal static class Program
     return verb switch
     {
       "get" => await RunActionDocGetAsync(options, loggerFactory).ConfigureAwait(false),
+      "pull" => await RunActionDocPullAsync(options, loggerFactory).ConfigureAwait(false),
       "upload" or "set" => await RunActionDocUploadAsync(options, loggerFactory).ConfigureAwait(false),
+      "push" => await RunActionDocPushAsync(options, loggerFactory).ConfigureAwait(false),
       _ => await UnknownVerbAsync(options).ConfigureAwait(false),
     };
   }
@@ -117,9 +121,42 @@ internal static class Program
     await EmitErrorAsync(
         options.Json,
         "UNKNOWN_ACTION_DOC_VERB",
-        "Use: action-doc get|upload|set (--code <sharedId> [--html <path>] | --dir <folder>) [--json]")
+        "Use: action-doc pull|push|get|upload|set (--code <sharedId> | --dir <folder>) [--json]")
       .ConfigureAwait(false);
     return ExitCodes.Error;
+  }
+
+  /// <summary>
+  /// Resolves targets for pull/push: --code uses ~/.quicker/actions/&lt;id&gt;/info.html; --dir uses manifest in that folder.
+  /// </summary>
+  private static (string SharedId, string HtmlPath, string ActionDirectory) ResolvePullPushTargets(
+    ActionDocOptions options,
+    ActionLocalStore store)
+  {
+    if (!string.IsNullOrWhiteSpace(options.Dir))
+    {
+      var dir = Path.GetFullPath(options.Dir);
+      var manifest = ActionManifestReader.FindManifestPath(dir);
+      if (manifest is null)
+      {
+        throw new InvalidOperationException(
+          $"No action.yaml / meta.yaml / manifest.yaml under '{dir}'.");
+      }
+
+      var (id, htmlRel) = ActionManifestReader.Read(manifest, defaultHtmlFile: ActionLocalStore.InfoHtmlFileName);
+      var htmlPath = Path.GetFullPath(Path.Combine(dir, htmlRel));
+      return (id, htmlPath, dir);
+    }
+
+    if (string.IsNullOrWhiteSpace(options.Code))
+    {
+      throw new InvalidOperationException(
+        "Provide --code <sharedId> for pull/push, or --dir <folder> with meta.yaml.");
+    }
+
+    var sharedId = options.Code.Trim();
+    var actionDir = store.GetActionDirectory(sharedId);
+    return (sharedId, store.GetInfoHtmlPath(sharedId), actionDir);
   }
 
   private static (string SharedId, string HtmlPath) ResolveTargets(
@@ -179,40 +216,54 @@ internal static class Program
       return ExitCodes.Error;
     }
 
-    if (!TryGetCredentials(options.Json, out var email, out var password))
+    var fetch = await FetchDescriptionHtmlAsync(options.Json, sharedId, loggerFactory).ConfigureAwait(false);
+    if (fetch.Html is null)
     {
-      return ExitCodes.Error;
-    }
-
-    var agentSettings = QuickerAgentSettings.FromEnvironment();
-    var pageSettings = ActionDescriptionUploadSettings.FromEnvironment();
-    var loginLogger = loggerFactory.CreateLogger<QuickerWebLoginService>();
-    var docLogger = loggerFactory.CreateLogger<ActionDescriptionService>();
-    var service = new ActionDescriptionService(new QuickerWebLoginService(loginLogger), docLogger);
-
-    var result = await service
-      .GetHtmlAsync(email, password, sharedId, pageSettings, agentSettings, CancellationToken.None)
-      .ConfigureAwait(false);
-
-    if (!result.Ok || string.IsNullOrEmpty(result.Html))
-    {
-      await EmitErrorAsync(
-          options.Json,
-          result.ErrorCode ?? "GET_FAILED",
-          result.Message ?? "Failed to fetch description HTML.")
-        .ConfigureAwait(false);
       return ExitCodes.Error;
     }
 
     try
     {
-      var outDir = Path.GetDirectoryName(outputPath);
-      if (!string.IsNullOrEmpty(outDir))
-      {
-        Directory.CreateDirectory(outDir);
-      }
+      await WriteHtmlFileAsync(outputPath, fetch.Html).ConfigureAwait(false);
+    }
+    catch (Exception ex)
+    {
+      await EmitErrorAsync(options.Json, "HTML_WRITE_ERROR", ex.Message).ConfigureAwait(false);
+      return ExitCodes.Error;
+    }
 
-      await File.WriteAllTextAsync(outputPath, result.Html).ConfigureAwait(false);
+    EmitGetSuccess(options.Json, "get", sharedId, outputPath, fetch.Html.Length, fetch.AgentSettings);
+    return ExitCodes.Success;
+  }
+
+  private static async Task<int> RunActionDocPullAsync(ActionDocOptions options, ILoggerFactory loggerFactory)
+  {
+    var store = ActionLocalStore.FromEnvironment();
+    string sharedId;
+    string outputPath;
+    string actionDir;
+
+    try
+    {
+      (sharedId, outputPath, actionDir) = ResolvePullPushTargets(options, store);
+    }
+    catch (Exception ex)
+    {
+      await EmitErrorAsync(options.Json, "ACTION_DOC_RESOLVE_ERROR", ex.Message).ConfigureAwait(false);
+      return ExitCodes.Error;
+    }
+
+    var fetch = await FetchDescriptionHtmlAsync(options.Json, sharedId, loggerFactory).ConfigureAwait(false);
+    if (fetch.Html is null)
+    {
+      return ExitCodes.Error;
+    }
+
+    try
+    {
+      Directory.CreateDirectory(actionDir);
+      await WriteHtmlFileAsync(outputPath, fetch.Html).ConfigureAwait(false);
+      await store.WriteMetaAsync(sharedId, CancellationToken.None).ConfigureAwait(false);
     }
     catch (Exception ex)
     {
@@ -226,22 +277,59 @@ internal static class Program
         new
         {
           ok = true,
-          action = "get",
+          action = "pull",
           sharedId,
-          outputPath,
-          htmlLength = result.Html.Length,
-          browserChannel = agentSettings.BrowserChannel,
-          profileDirectory = agentSettings.ProfileDirectory,
-          headless = agentSettings.Headless,
+          actionDirectory = actionDir,
+          infoHtmlPath = outputPath,
+          actionsRoot = store.ActionsRoot,
+          htmlLength = fetch.Html.Length,
+          headless = fetch.AgentSettings.Headless,
+          profileDirectory = fetch.AgentSettings.ProfileDirectory,
         },
         JsonWriteOptions));
     }
     else
     {
-      global::System.Console.WriteLine($"Saved description for {sharedId} to {outputPath}.");
+      global::System.Console.WriteLine(
+        $"Pulled description for {sharedId} to {outputPath}. Edit the file, then: action-doc push --code {sharedId}");
     }
 
     return ExitCodes.Success;
+  }
+
+  private static async Task<int> RunActionDocPushAsync(ActionDocOptions options, ILoggerFactory loggerFactory)
+  {
+    var store = ActionLocalStore.FromEnvironment();
+    string sharedId;
+    string htmlPath;
+
+    try
+    {
+      (sharedId, htmlPath, _) = ResolvePullPushTargets(options, store);
+    }
+    catch (Exception ex)
+    {
+      await EmitErrorAsync(options.Json, "ACTION_DOC_RESOLVE_ERROR", ex.Message).ConfigureAwait(false);
+      return ExitCodes.Error;
+    }
+
+    if (!File.Exists(htmlPath))
+    {
+      await EmitErrorAsync(
+          options.Json,
+          "LOCAL_INFO_NOT_FOUND",
+          $"No local description at '{htmlPath}'. Run: action-doc pull --code {sharedId}")
+        .ConfigureAwait(false);
+      return ExitCodes.Error;
+    }
+
+    return await UploadDescriptionFromFileAsync(
+        options,
+        sharedId,
+        htmlPath,
+        loggerFactory,
+        jsonActionName: "push")
+      .ConfigureAwait(false);
   }
 
   private static async Task<int> RunActionDocUploadAsync(ActionDocOptions options, ILoggerFactory loggerFactory)
@@ -266,10 +354,58 @@ internal static class Program
       return ExitCodes.Error;
     }
 
+    return await UploadDescriptionFromFileAsync(
+        options,
+        sharedId,
+        htmlPath,
+        loggerFactory,
+        jsonActionName: "upload")
+      .ConfigureAwait(false);
+  }
+
+  private static async Task<(string? Html, QuickerAgentSettings AgentSettings)> FetchDescriptionHtmlAsync(
+    bool json,
+    string sharedId,
+    ILoggerFactory loggerFactory)
+  {
+    if (!TryGetCredentials(json, out var email, out var password))
+    {
+      return (null, QuickerAgentSettings.FromEnvironment());
+    }
+
+    var agentSettings = QuickerAgentSettings.FromEnvironment();
+    var loginLogger = loggerFactory.CreateLogger<QuickerWebLoginService>();
+    var docLogger = loggerFactory.CreateLogger<ActionDescriptionService>();
+    var service = new ActionDescriptionService(new QuickerWebLoginService(loginLogger), docLogger);
+
+    var result = await service
+      .GetHtmlAsync(email, password, sharedId, agentSettings, CancellationToken.None)
+      .ConfigureAwait(false);
+
+    if (!result.Ok || string.IsNullOrEmpty(result.Html))
+    {
+      await EmitErrorAsync(
+          json,
+          result.ErrorCode ?? "GET_FAILED",
+          result.Message ?? "Failed to fetch description HTML.")
+        .ConfigureAwait(false);
+      return (null, agentSettings);
+    }
+
+    return (result.Html, agentSettings);
+  }
+
+  private static async Task<int> UploadDescriptionFromFileAsync(
+    ActionDocOptions options,
+    string sharedId,
+    string htmlPath,
+    ILoggerFactory loggerFactory,
+    string jsonActionName)
+  {
     string htmlContent;
     try
     {
-      htmlContent = await File.ReadAllTextAsync(htmlPath).ConfigureAwait(false);
+      htmlContent = await File.ReadAllTextAsync(htmlPath, Utf8NoBom).ConfigureAwait(false);
     }
     catch (Exception ex)
     {
@@ -283,13 +419,12 @@ internal static class Program
     }
 
     var agentSettings = QuickerAgentSettings.FromEnvironment();
-    var pageSettings = ActionDescriptionUploadSettings.FromEnvironment();
     var loginLogger = loggerFactory.CreateLogger<QuickerWebLoginService>();
     var docLogger = loggerFactory.CreateLogger<ActionDescriptionService>();
     var service = new ActionDescriptionService(new QuickerWebLoginService(loginLogger), docLogger);
 
     var result = await service
-      .SetHtmlAsync(email, password, sharedId, htmlContent, pageSettings, agentSettings, CancellationToken.None)
+      .SetHtmlAsync(email, password, sharedId, htmlContent, agentSettings, CancellationToken.None)
       .ConfigureAwait(false);
 
     if (!result.Ok)
@@ -305,12 +440,11 @@ internal static class Program
         new
         {
           ok = true,
-          action = "upload",
+          action = jsonActionName,
           sharedId,
           htmlPath,
           headless = agentSettings.Headless,
           profileDirectory = agentSettings.ProfileDirectory,
-          pageUrlTemplate = pageSettings.PageUrlTemplate,
         },
         JsonWriteOptions));
     }
@@ -320,6 +454,47 @@ internal static class Program
     }
 
     return ExitCodes.Success;
+  }
+
+  private static async Task WriteHtmlFileAsync(string outputPath, string html)
+  {
+    var outDir = Path.GetDirectoryName(outputPath);
+    if (!string.IsNullOrEmpty(outDir))
+    {
+      Directory.CreateDirectory(outDir);
+    }
+
+    await File.WriteAllTextAsync(outputPath, html, Utf8NoBom).ConfigureAwait(false);
+  }
+
+  private static void EmitGetSuccess(
+    bool json,
+    string actionName,
+    string sharedId,
+    string outputPath,
+    int htmlLength,
+    QuickerAgentSettings agentSettings)
+  {
+    if (json)
+    {
+      global::System.Console.WriteLine(JsonSerializer.Serialize(
+        new
+        {
+          ok = true,
+          action = actionName,
+          sharedId,
+          outputPath,
+          htmlLength,
+          browserChannel = agentSettings.BrowserChannel,
+          profileDirectory = agentSettings.ProfileDirectory,
+          headless = agentSettings.Headless,
+        },
+        JsonWriteOptions));
+    }
+    else
+    {
+      global::System.Console.WriteLine($"Saved description for {sharedId} to {outputPath}.");
+    }
   }
 
   private static bool TryGetCredentials(bool json, out string email, out string password)
@@ -371,7 +546,7 @@ internal static class Program
 [Verb("action-doc", HelpText = "Get or update HTML intro text for a shared action on getquicker.net.")]
 public sealed class ActionDocOptions
 {
-  [Value(0, MetaName = "action", Required = true, HelpText = "get | upload | set")]
+  [Value(0, MetaName = "command", Required = true, HelpText = "pull | push | get | upload | set")]
   public string? Action { get; set; }
 
   [Option("code", HelpText = "Shared action id (GUID) when not using --dir.")]

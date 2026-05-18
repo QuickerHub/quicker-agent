@@ -24,14 +24,12 @@ public sealed class ActionDescriptionService
     string email,
     string password,
     string sharedActionCode,
-    ActionDescriptionUploadSettings pageSettings,
     QuickerAgentSettings agentSettings,
     CancellationToken cancellationToken = default) =>
     RunWithEditorAsync(
       email,
       password,
       sharedActionCode,
-      pageSettings,
       agentSettings,
       readHtml: true,
       htmlToWrite: null,
@@ -42,7 +40,6 @@ public sealed class ActionDescriptionService
     string password,
     string sharedActionCode,
     string htmlContent,
-    ActionDescriptionUploadSettings pageSettings,
     QuickerAgentSettings agentSettings,
     CancellationToken cancellationToken = default)
   {
@@ -51,7 +48,6 @@ public sealed class ActionDescriptionService
       email,
       password,
       sharedActionCode,
-      pageSettings,
       agentSettings,
       readHtml: false,
       htmlToWrite: htmlContent,
@@ -62,7 +58,6 @@ public sealed class ActionDescriptionService
     string email,
     string password,
     string sharedActionCode,
-    ActionDescriptionUploadSettings pageSettings,
     QuickerAgentSettings agentSettings,
     bool readHtml,
     string? htmlToWrite,
@@ -71,7 +66,6 @@ public sealed class ActionDescriptionService
     ArgumentException.ThrowIfNullOrEmpty(email);
     ArgumentException.ThrowIfNullOrEmpty(password);
     ArgumentException.ThrowIfNullOrWhiteSpace(sharedActionCode);
-    ArgumentNullException.ThrowIfNull(pageSettings);
     ArgumentNullException.ThrowIfNull(agentSettings);
 
     try
@@ -84,7 +78,12 @@ public sealed class ActionDescriptionService
       await session.EnsureLoggedInAsync(email, password, cancellationToken).ConfigureAwait(false);
       var page = await session.GetPageAsync(cancellationToken).ConfigureAwait(false);
 
-      var editorReady = await NavigateToEditorAsync(page, sharedActionCode, pageSettings, cancellationToken)
+      var editorReady = await NavigateToEditPageWithLoginRetryAsync(
+          page,
+          email,
+          password,
+          sharedActionCode,
+          cancellationToken)
         .ConfigureAwait(false);
       if (!editorReady.Ok)
       {
@@ -93,37 +92,43 @@ public sealed class ActionDescriptionService
 
       if (readHtml)
       {
-        var html = await ReadEditorHtmlAsync(page).ConfigureAwait(false);
+        var html = await ReadEditorHtmlAsync(page, cancellationToken).ConfigureAwait(false);
         if (string.IsNullOrEmpty(html))
         {
           return ActionDocOperationResult.Fail(
             "EDITOR_EMPTY",
-            "Summernote / .note-editable returned no HTML. Log in as the action owner or adjust selectors.");
+            "Could not read intro HTML from source textarea. Log in as the action owner.");
         }
 
         _logger.LogInformation("Read description HTML ({Length} chars).", html.Length);
         return ActionDocOperationResult.Success(html);
       }
 
-      var mode = await WriteEditorHtmlAsync(page, htmlToWrite!).ConfigureAwait(false);
-      if (string.IsNullOrEmpty(mode))
+      var written = await WriteEditorHtmlAsync(page, htmlToWrite!, cancellationToken).ConfigureAwait(false);
+      if (!written)
       {
         return ActionDocOperationResult.Fail(
           "EDITOR_NOT_FOUND",
-          "Summernote / .note-editable not found after wait. Adjust QKAGENT_ACTION_DOC_EDITOR_SELECTOR.");
+          "Could not write HTML into source textarea after enabling code view.");
       }
 
-      _logger.LogInformation("Injected HTML via {Mode}.", mode);
+      var synced = await SyncSourceToPreviewAsync(page, cancellationToken).ConfigureAwait(false);
+      if (!synced)
+      {
+        return ActionDocOperationResult.Fail(
+          "SOURCE_SYNC_FAILED",
+          "Could not sync source HTML back to preview before submit.");
+      }
 
-      var saved = await TryClickSaveAsync(page, pageSettings, cancellationToken).ConfigureAwait(false);
+      var saved = await SubmitEditFormAsync(page, cancellationToken).ConfigureAwait(false);
       if (!saved)
       {
         return ActionDocOperationResult.Fail(
-          "SAVE_BUTTON_NOT_FOUND",
-          $"Could not find save control (name '{pageSettings.SaveButtonAccessibleName}' or QKAGENT_ACTION_DOC_SAVE_SELECTOR).");
+          "SUBMIT_FAILED",
+          "Could not submit the edit form (primary input or form.requestSubmit).");
       }
 
-      await page.WaitForLoadStateAsync(LoadState.NetworkIdle).ConfigureAwait(false);
+      await WaitForFormSubmitCompleteAsync(page, cancellationToken).ConfigureAwait(false);
       return ActionDocOperationResult.Success();
     }
     catch (Exception ex)
@@ -133,49 +138,61 @@ public sealed class ActionDescriptionService
     }
   }
 
-  private async Task<ActionDocOperationResult> NavigateToEditorAsync(
+  private async Task<ActionDocOperationResult> NavigateToEditPageWithLoginRetryAsync(
     IPage page,
+    string email,
+    string password,
     string sharedActionCode,
-    ActionDescriptionUploadSettings settings,
     CancellationToken cancellationToken)
   {
-    var targetUrl = ActionDescriptionUploadSettings.ExpandPageUrl(settings.PageUrlTemplate, sharedActionCode);
-    _logger.LogInformation("Opening {Url}", targetUrl);
+    var result = await NavigateToEditPageAsync(page, sharedActionCode, cancellationToken).ConfigureAwait(false);
+    if (result.Ok || !string.Equals(result.ErrorCode, "SESSION_EXPIRED", StringComparison.Ordinal))
+    {
+      return result;
+    }
+
+    _logger.LogInformation("Edit page requires login; re-authenticating.");
+    var loggedIn = await _loginService.LoginAsync(page, email, password, cancellationToken).ConfigureAwait(false);
+    if (!loggedIn)
+    {
+      return ActionDocOperationResult.Fail("LOGIN_FAILED", "Quicker login did not complete.");
+    }
+
+    return await NavigateToEditPageAsync(page, sharedActionCode, cancellationToken).ConfigureAwait(false);
+  }
+
+  private async Task<ActionDocOperationResult> NavigateToEditPageAsync(
+    IPage page,
+    string sharedActionCode,
+    CancellationToken cancellationToken)
+  {
+    _ = cancellationToken;
+    var editUrl = GetQuickerActionDocPage.ExpandEditPageUrl(sharedActionCode);
+    _logger.LogInformation("Opening edit page {Url}", editUrl);
     await page
-      .GotoAsync(targetUrl, new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 90_000 })
+      .GotoAsync(editUrl, new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 })
       .ConfigureAwait(false);
 
     if (await _loginService.IsLoginPageAsync(page).ConfigureAwait(false))
     {
       return ActionDocOperationResult.Fail(
         "SESSION_EXPIRED",
-        "Login session expired while opening the action page. Retry the command to re-login.");
+        "Redirected to login while opening the edit page.");
     }
 
-    if (!string.IsNullOrWhiteSpace(settings.OpenEditorCssSelector))
+    if (!page.Url.Contains(GetQuickerActionDocPage.EditPageUrlFragment, StringComparison.OrdinalIgnoreCase))
     {
-      var opener = page.Locator(settings.OpenEditorCssSelector).First;
-      try
-      {
-        if (await opener.IsVisibleAsync().ConfigureAwait(false))
-        {
-          _logger.LogInformation("Clicking open-editor control ({Selector}).", settings.OpenEditorCssSelector);
-          await opener.ClickAsync().ConfigureAwait(false);
-          await Task.Delay(800, cancellationToken).ConfigureAwait(false);
-        }
-      }
-      catch (Exception ex)
-      {
-        _logger.LogWarning(ex, "Open-editor selector did not succeed; continuing.");
-      }
+      return ActionDocOperationResult.Fail(
+        "EDIT_PAGE_NOT_REACHED",
+        $"Expected edit page URL; got {page.Url}");
     }
 
-    _logger.LogInformation("Waiting for editor ({Selector}).", settings.EditorWaitSelector);
+    _logger.LogInformation("Waiting for editor ({Selector}).", GetQuickerActionDocPage.EditorWaitSelector);
     try
     {
       await page
         .WaitForSelectorAsync(
-          settings.EditorWaitSelector,
+          GetQuickerActionDocPage.EditorWaitSelector,
           new PageWaitForSelectorOptions { State = WaitForSelectorState.Visible, Timeout = 45_000 })
         .ConfigureAwait(false);
     }
@@ -183,83 +200,292 @@ public sealed class ActionDescriptionService
     {
       return ActionDocOperationResult.Fail(
         "EDITOR_NOT_FOUND",
-        $"No visible editor matched '{settings.EditorWaitSelector}'. " +
-        "Log in as the action owner, or set QKAGENT_ACTION_DOC_PAGE_URL / QKAGENT_ACTION_DOC_OPEN_EDITOR_SELECTOR / QKAGENT_ACTION_DOC_EDITOR_SELECTOR.");
+        $"Editor not visible: {GetQuickerActionDocPage.EditorWaitSelector}");
     }
 
     return ActionDocOperationResult.Success();
   }
 
-  private static async Task<string?> ReadEditorHtmlAsync(IPage page) =>
-    await page
-      .EvaluateAsync<string?>(
-        @"() => {
-            const jq = window['jQuery'] || window['$'];
-            const sn = document.querySelector('#summernote');
-            if (jq && sn && jq.fn && jq.fn.summernote) {
-              return jq(sn).summernote('code');
-            }
-            const ed = document.querySelector('.note-editable');
-            if (ed) {
-              return ed.innerHTML;
-            }
-            return null;
-          }")
-      .ConfigureAwait(false);
-
-  private static async Task<string?> WriteEditorHtmlAsync(IPage page, string htmlContent) =>
-    await page
-      .EvaluateAsync<string?>(
-        @"html => {
-            const jq = window['jQuery'] || window['$'];
-            const sn = document.querySelector('#summernote');
-            if (jq && sn && jq.fn && jq.fn.summernote) {
-              jq(sn).summernote('code', html);
-              return 'summernote';
-            }
-            const ed = document.querySelector('.note-editable');
-            if (ed) {
-              ed.innerHTML = html;
-              return 'editable';
-            }
-            return null;
-          }",
-        htmlContent)
-      .ConfigureAwait(false);
-
-  private static async Task<bool> TryClickSaveAsync(
-    IPage page,
-    ActionDescriptionUploadSettings settings,
-    CancellationToken cancellationToken)
+  private async Task<bool> EnsureSourceCodeViewAsync(IPage page)
   {
-    _ = cancellationToken;
-
-    if (!string.IsNullOrWhiteSpace(settings.SaveCssSelector))
+    var textarea = await FindSourceTextareaAsync(page).ConfigureAwait(false);
+    if (textarea is not null && await textarea.IsVisibleAsync().ConfigureAwait(false))
     {
-      var loc = page.Locator(settings.SaveCssSelector).First;
-      if (await loc.IsVisibleAsync().ConfigureAwait(false))
+      return true;
+    }
+
+    try
+    {
+      var button = page
+        .GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = GetQuickerActionDocPage.SourceCodeButtonName })
+        .First;
+      if (await button.IsVisibleAsync().ConfigureAwait(false))
       {
-        await loc.ClickAsync().ConfigureAwait(false);
+        _logger.LogInformation("Switching to source view ({ButtonName}).", GetQuickerActionDocPage.SourceCodeButtonName);
+        await button.ClickAsync().ConfigureAwait(false);
+      }
+    }
+    catch (Exception ex)
+    {
+      _logger.LogDebug(ex, "Source view button click failed; trying script toggle.");
+      await page.EvaluateAsync<bool>(ActionDescriptionEditorInterop.EnsureSourceViewScript).ConfigureAwait(false);
+    }
+
+    foreach (var selector in GetQuickerActionDocPage.SourceCodeTextareaSelectors)
+    {
+      try
+      {
+        var loc = page.Locator(selector).First;
+        await loc.WaitForAsync(
+          new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 15_000 })
+          .ConfigureAwait(false);
         return true;
+      }
+      catch (TimeoutException)
+      {
+        _logger.LogDebug("Source textarea not visible yet: {Selector}", selector);
       }
     }
 
-    var byName = page
-      .GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = settings.SaveButtonAccessibleName })
-      .First;
-    if (await byName.IsVisibleAsync().ConfigureAwait(false))
+    return false;
+  }
+
+  private async Task<ILocator?> FindSourceTextareaAsync(IPage page)
+  {
+    foreach (var selector in GetQuickerActionDocPage.SourceCodeTextareaSelectors)
     {
-      await byName.ClickAsync().ConfigureAwait(false);
+      try
+      {
+        var loc = page.Locator(selector).First;
+        if (await loc.IsVisibleAsync().ConfigureAwait(false))
+        {
+          return loc;
+        }
+      }
+      catch
+      {
+        // try next selector
+      }
+    }
+
+    return null;
+  }
+
+  private async Task<string?> ReadEditorHtmlAsync(IPage page, CancellationToken cancellationToken)
+  {
+    _ = cancellationToken;
+    if (!await EnsureSourceCodeViewAsync(page).ConfigureAwait(false))
+    {
+      _logger.LogWarning("Source view not available; falling back to Summernote API.");
+      return await page
+        .EvaluateAsync<string?>(ActionDescriptionEditorInterop.ReadSummernoteCodeScript)
+        .ConfigureAwait(false);
+    }
+
+    var textarea = await FindSourceTextareaAsync(page).ConfigureAwait(false);
+    if (textarea is null)
+    {
+      return null;
+    }
+
+    var html = await textarea.InputValueAsync().ConfigureAwait(false);
+    if (!string.IsNullOrEmpty(html))
+    {
+      _logger.LogInformation("Read HTML from source textarea.");
+      return html;
+    }
+
+    return await page
+      .EvaluateAsync<string?>(ActionDescriptionEditorInterop.ReadSummernoteCodeScript)
+      .ConfigureAwait(false);
+  }
+
+  private async Task<bool> WriteEditorHtmlAsync(
+    IPage page,
+    string htmlContent,
+    CancellationToken cancellationToken)
+  {
+    _ = cancellationToken;
+    if (!await EnsureSourceCodeViewAsync(page).ConfigureAwait(false))
+    {
+      return false;
+    }
+
+    var textarea = await FindSourceTextareaAsync(page).ConfigureAwait(false);
+    if (textarea is null)
+    {
+      return false;
+    }
+
+    await textarea.FillAsync(htmlContent).ConfigureAwait(false);
+    var dispatched = await page
+      .EvaluateAsync<string?>(ActionDescriptionEditorInterop.DispatchSourceInputScript)
+      .ConfigureAwait(false);
+    _logger.LogInformation("Wrote HTML to source textarea (sync: {Selector}).", dispatched ?? "fill only");
+    return true;
+  }
+
+  /// <summary>
+  /// Exit source view so Summernote applies textarea content to the WYSIWYG preview (same as clicking 源代码 again).
+  /// </summary>
+  private async Task<bool> SyncSourceToPreviewAsync(IPage page, CancellationToken cancellationToken)
+  {
+    var codeview = page.Locator(".note-editor.codeview").First;
+    var inCodeview = await codeview.IsVisibleAsync().ConfigureAwait(false);
+    if (!inCodeview)
+    {
+      if (await page.Locator(".note-editable").First.IsVisibleAsync().ConfigureAwait(false))
+      {
+        _logger.LogInformation("Already in preview mode.");
+        return true;
+      }
+
+      return false;
+    }
+
+    try
+    {
+      var button = page
+        .GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = GetQuickerActionDocPage.SourceCodeButtonName })
+        .First;
+      if (await button.IsVisibleAsync().ConfigureAwait(false))
+      {
+        _logger.LogInformation(
+          "Clicking {ButtonName} again to apply source HTML and return to preview.",
+          GetQuickerActionDocPage.SourceCodeButtonName);
+        await button.ClickAsync().ConfigureAwait(false);
+        await page
+          .Locator(".note-editable")
+          .First
+          .WaitForAsync(
+            new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10_000 })
+          .ConfigureAwait(false);
+        var stillCodeview = await codeview.IsVisibleAsync().ConfigureAwait(false);
+        if (!stillCodeview)
+        {
+          return true;
+        }
+      }
+    }
+    catch (Exception ex)
+    {
+      _logger.LogWarning(ex, "Source button toggle back to preview failed; trying script.");
+    }
+
+    var mode = await page
+      .EvaluateAsync<string?>(ActionDescriptionEditorInterop.ExitSourceViewScript)
+      .ConfigureAwait(false);
+    if (mode is "preview" or "toggled")
+    {
+      _logger.LogInformation("Exited source view via script ({Mode}).", mode);
       return true;
     }
 
-    var submit = page.Locator("button[type='submit'], input[type='submit']").First;
-    if (await submit.IsVisibleAsync().ConfigureAwait(false))
+    return await page.Locator(".note-editable").First.IsVisibleAsync().ConfigureAwait(false)
+           && !await codeview.IsVisibleAsync().ConfigureAwait(false);
+  }
+
+  private async Task<bool> SubmitEditFormAsync(IPage page, CancellationToken cancellationToken)
+  {
+    _ = cancellationToken;
+
+    try
     {
-      await submit.ClickAsync().ConfigureAwait(false);
-      return true;
+      var byName = page
+        .GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = GetQuickerActionDocPage.SubmitButtonName })
+        .First;
+      if (await byName.IsVisibleAsync().ConfigureAwait(false))
+      {
+        await byName.ScrollIntoViewIfNeededAsync().ConfigureAwait(false);
+        await byName.ClickAsync().ConfigureAwait(false);
+        _logger.LogInformation("Clicked submit by accessible name.");
+        return true;
+      }
+    }
+    catch (Exception ex)
+    {
+      _logger.LogDebug(ex, "Submit by accessible name failed.");
+    }
+
+    foreach (var selector in GetQuickerActionDocPage.SubmitSelectors)
+    {
+      try
+      {
+        var submit = page.Locator(selector).First;
+        if (await submit.IsVisibleAsync().ConfigureAwait(false))
+        {
+          _logger.LogInformation("Clicking submit input ({Selector}).", selector);
+          await submit.ScrollIntoViewIfNeededAsync().ConfigureAwait(false);
+          await submit.ClickAsync().ConfigureAwait(false);
+          return true;
+        }
+      }
+      catch (Exception ex)
+      {
+        _logger.LogDebug(ex, "Submit selector did not work: {Selector}", selector);
+      }
+    }
+
+    try
+    {
+      var submitted = await page
+        .EvaluateAsync<bool>(
+          @"() => {
+              const form = document.querySelector('body > div.body-wrapper > div > form')
+                || document.querySelector('form');
+              if (!form) return false;
+              if (typeof form.requestSubmit === 'function') {
+                form.requestSubmit();
+                return true;
+              }
+              form.submit();
+              return true;
+            }")
+        .ConfigureAwait(false);
+      if (submitted)
+      {
+        _logger.LogInformation("Submitted edit form via requestSubmit().");
+        return true;
+      }
+    }
+    catch (Exception ex)
+    {
+      _logger.LogDebug(ex, "form.requestSubmit failed.");
     }
 
     return false;
+  }
+
+  private async Task WaitForFormSubmitCompleteAsync(IPage page, CancellationToken cancellationToken)
+  {
+    _ = cancellationToken;
+    _logger.LogInformation("Waiting for form submit to complete...");
+
+    try
+    {
+      await page
+        .WaitForLoadStateAsync(LoadState.NetworkIdle, new PageWaitForLoadStateOptions { Timeout = 60_000 })
+        .ConfigureAwait(false);
+    }
+    catch (TimeoutException)
+    {
+      _logger.LogDebug("NetworkIdle wait timed out after submit; continuing.");
+    }
+
+    try
+    {
+      await page
+        .WaitForFunctionAsync(
+          @"() => window.location.href.toLowerCase().indexOf('/member/action/edit') === -1",
+          null,
+          new PageWaitForFunctionOptions { Timeout = 30_000 })
+        .ConfigureAwait(false);
+    }
+    catch (TimeoutException)
+    {
+      _logger.LogDebug("Leave edit page wait timed out; submit may still have succeeded.");
+    }
+
+    _logger.LogInformation("Form submit wait finished (url: {Url}).", page.Url);
   }
 }

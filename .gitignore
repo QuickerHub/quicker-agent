@@ -23,3 +23,6 @@ Desktop.ini
 .vs/
 .idea/
 *.swp
+.playwright-mcp/
+preview/.venv/
+preview/__pycache__/

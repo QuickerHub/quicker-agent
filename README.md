@@ -21,20 +21,35 @@ Command-line tool to **get or update HTML** for a [getquicker.net](https://getqu
 | `QKAGENT_HEADLESS` | Optional: `1` / `true` to run without a window (default: headed). |
 | `QKAGENT_PROFILE_DIR` | Optional: persistent browser profile path (cookies). Default: `%LOCALAPPDATA%\qkagent\browser-profile`. |
 | `QKAGENT_BROWSER_CHANNEL` | Optional: force `chrome`, `msedge`, or `chromium`. Default: try Chrome → Edge → Chromium. |
-| `QKAGENT_ACTION_DOC_*` | Optional overrides for page URL, editor/save selectors — see `env.example`. |
+| `QKAGENT_ACTIONS_ROOT` | Optional: root for **pull/push** local files. Default: `%USERPROFILE%\.quicker\actions`. |
+
+Page UI labels (编辑信息、源代码、更新动作信息) are fixed in `QuickerAgent.Core/GetQuickerActionDocPage.cs`.
 
 Do not commit `.env`.
 
 ## Usage
 
+### Edit workflow (recommended)
+
+Local layout: **`%USERPROFILE%\.quicker\actions\<shared-guid>\info.html`** (override with `QKAGENT_ACTIONS_ROOT`).
+
 ```powershell
-# Fetch intro HTML from the site
+# 1. Pull from getquicker.net → local info.html
+.\qkagent.exe action-doc pull --code "<shared-guid>" --json
+
+# 2. Edit %USERPROFILE%\.quicker\actions\<shared-guid>\info.html
+
+# 3. Push local file back to the site
+.\qkagent.exe action-doc push --code "<shared-guid>" --json
+```
+
+Agent-oriented steps: [`.cursor/skills/action-doc-workflow/SKILL.md`](.cursor/skills/action-doc-workflow/SKILL.md).
+
+### Low-level commands
+
+```powershell
 .\qkagent.exe action-doc get --code "<shared-guid>" --out .\intro.html --json
-
-# Fetch using action folder (writes manifest html path, default description.html)
 .\qkagent.exe action-doc get --dir .\samples\action-doc --json
-
-# Upload / update intro HTML
 .\qkagent.exe action-doc upload --code "<shared-guid>" --html .\intro.html --json
 .\qkagent.exe action-doc set --dir .\samples\action-doc --json
 ```

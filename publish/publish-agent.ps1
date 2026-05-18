@@ -103,8 +103,8 @@ if (Test-Path -LiteralPath $exePath) {
 
 Write-Host ""
 Write-Host "Examples:" -ForegroundColor Yellow
-Write-Host "  .\publish\agent\qkagent.exe action-doc get --dir .\samples\action-doc --json"
-Write-Host "  .\publish\agent\qkagent.exe action-doc upload --code <guid> --html .\intro.html --json"
+Write-Host "  .\publish\agent\qkagent.exe action-doc pull --code <guid> --json"
+Write-Host "  .\publish\agent\qkagent.exe action-doc push --code <guid> --json"
 Write-Host ""
 
 try {

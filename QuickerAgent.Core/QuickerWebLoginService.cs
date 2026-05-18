@@ -15,6 +15,7 @@ public sealed class QuickerWebLoginService
   {
     public const string EmailInput = "//*[@id=\"Input_Email\"]";
     public const string PasswordInput = "//*[@id=\"Input_Password\"]";
+    public const string RememberMeCheckbox = "//*[@id=\"Input_RememberMe\"]";
     public const string LoginButton = "//button[@type=\"submit\" and text()=\"登录\"]";
   }
 
@@ -87,6 +88,7 @@ public sealed class QuickerWebLoginService
       _logger.LogInformation("Filling login form...");
       await page.FillAsync(XPaths.EmailInput, email).ConfigureAwait(false);
       await page.FillAsync(XPaths.PasswordInput, password).ConfigureAwait(false);
+      await TryCheckRememberMeAsync(page).ConfigureAwait(false);
 
       _logger.LogInformation("Submitting login form...");
       await page.ClickAsync(XPaths.LoginButton).ConfigureAwait(false);
@@ -110,6 +112,41 @@ public sealed class QuickerWebLoginService
     {
       _logger.LogError(ex, "Login failed.");
       return false;
+    }
+  }
+
+  private async Task TryCheckRememberMeAsync(IPage page)
+  {
+    try
+    {
+      var remember = page.Locator(XPaths.RememberMeCheckbox).First;
+      if (!await remember.IsVisibleAsync().ConfigureAwait(false))
+      {
+        var byLabel = page.GetByRole(AriaRole.Checkbox, new PageGetByRoleOptions { Name = "记住我?" }).First;
+        if (!await byLabel.IsVisibleAsync().ConfigureAwait(false))
+        {
+          _logger.LogDebug("Remember-me checkbox not found; skipping.");
+          return;
+        }
+
+        if (!await byLabel.IsCheckedAsync().ConfigureAwait(false))
+        {
+          await byLabel.CheckAsync().ConfigureAwait(false);
+          _logger.LogInformation("Checked remember-me.");
+        }
+
+        return;
+      }
+
+      if (!await remember.IsCheckedAsync().ConfigureAwait(false))
+      {
+        await remember.CheckAsync().ConfigureAwait(false);
+        _logger.LogInformation("Checked remember-me.");
+      }
+    }
+    catch (Exception ex)
+    {
+      _logger.LogWarning(ex, "Could not check remember-me; continuing login.");
     }
   }
 
