@@ -2,12 +2,15 @@ namespace QuickerAgent.Core;
 
 /// <summary>
 /// Local on-disk layout for per-action description HTML under the user profile.
-/// Default: %USERPROFILE%\.quicker\actions\&lt;sharedId&gt;\info.html
+/// Default: &lt;repo&gt;/actions/&lt;sharedId&gt;/info.html when README exists, else %USERPROFILE%\.quicker\actions.
 /// </summary>
 public sealed class ActionLocalStore
 {
+  public const string PageHtmlFileName = "page.html";
   public const string InfoHtmlFileName = "info.html";
   public const string MetaYamlFileName = "meta.yaml";
+  public const string ActionsReadmeMarker = "README.md";
+  public const string RepoActionsFolderName = "actions";
 
   public ActionLocalStore(string actionsRoot)
   {
@@ -25,17 +28,58 @@ public sealed class ActionLocalStore
     var root = Environment.GetEnvironmentVariable("QKAGENT_ACTIONS_ROOT");
     if (string.IsNullOrWhiteSpace(root))
     {
-      root = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-        ".quicker",
-        "actions");
+      root = TryFindRepoActionsRoot()
+             ?? Path.Combine(
+               Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+               ".quicker",
+               "actions");
+    }
+    else if (!Path.IsPathRooted(root))
+    {
+      var baseDir = TryFindRepoRoot() ?? Directory.GetCurrentDirectory();
+      root = Path.GetFullPath(Path.Combine(baseDir, root));
     }
 
     return new ActionLocalStore(root);
   }
 
+  /// <summary>
+  /// Walks up from cwd for actions/README.md (repo layout).
+  /// </summary>
+  public static string? TryFindRepoActionsRoot()
+  {
+    var repo = TryFindRepoRoot();
+    return repo is null ? null : Path.Combine(repo, RepoActionsFolderName);
+  }
+
+  public static string? TryFindRepoRoot()
+  {
+    var dir = Directory.GetCurrentDirectory();
+    for (var i = 0; i < 12; i++)
+    {
+      var marker = Path.Combine(dir, RepoActionsFolderName, ActionsReadmeMarker);
+      if (File.Exists(marker))
+      {
+        return dir;
+      }
+
+      var parent = Directory.GetParent(dir);
+      if (parent is null)
+      {
+        break;
+      }
+
+      dir = parent.FullName;
+    }
+
+    return null;
+  }
+
   public string GetActionDirectory(string sharedActionId) =>
     Path.Combine(ActionsRoot, SanitizeActionId(sharedActionId));
+
+  public string GetPageHtmlPath(string sharedActionId) =>
+    Path.Combine(GetActionDirectory(sharedActionId), PageHtmlFileName);
 
   public string GetInfoHtmlPath(string sharedActionId) =>
     Path.Combine(GetActionDirectory(sharedActionId), InfoHtmlFileName);
@@ -44,7 +88,8 @@ public sealed class ActionLocalStore
     Path.Combine(GetActionDirectory(sharedActionId), MetaYamlFileName);
 
   /// <summary>
-  /// Ensures the action folder exists and writes a minimal meta.yaml for tooling.
+  /// Ensures the action folder exists and writes minimal meta.yaml (sharedId + html path only).
+  /// Action title/icon/description come from the open API at preview time, not from this file.
   /// </summary>
   public async Task WriteMetaAsync(string sharedActionId, CancellationToken cancellationToken = default)
   {

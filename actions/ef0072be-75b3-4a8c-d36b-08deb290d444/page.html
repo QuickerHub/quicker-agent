@@ -1,0 +1,121 @@
+<div class="qk-doc">
+  <div class="qk-banner">
+    <div class="qk-banner__row">
+      <div>
+        <div class="qk-banner__label">Quicker 2.0</div>
+        <div class="qk-banner__title">组合动作<strong>设计器</strong> <em>预览版</em></div>
+        <p class="qk-banner__desc">WebView2 内嵌网页 · 可视化编辑步骤与变量 · 保存回 Quicker</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="qk-alert qk-alert--warning">
+    <strong>运行依赖：</strong>需安装 <code>net10-windows-runtime</code> 与 <code>net10-aspnet-runtime</code>（Windows 桌面与 ASP.NET 运行时）。首次打开若提示缺少运行时，请按系统指引安装后再试。
+  </div>
+
+  <p class="qk-feedback">
+    交流反馈：剪贴板动作 QQ 群 <span class="qk-qq">824753837</span>（设计器相关问题也可在此交流）
+  </p>
+
+  <header class="qk-hero">
+    <h1>动作设计器 2</h1>
+    <p class="qk-summary">
+      在 Quicker 内以<strong>网页设计器</strong>编辑组合动作的步骤与变量：拖拽排序、分支结构、子程序调用、撤销重做，改完后<strong>保存回 Quicker</strong>，与面板中的动作数据同步。
+    </p>
+  </header>
+
+  <section class="qk-section">
+    <h2>主要功能</h2>
+    <ul>
+      <li><strong>步骤可视化</strong>：列表拖拽/插入、分支与占位、按类型搜索插入、复制粘贴步骤 JSON</li>
+      <li><strong>步骤编辑弹窗</strong>：单步参数编辑；关闭时若有未保存修改会提示确认，避免误丢</li>
+      <li><strong>变量管理</strong>：维护动作变量，可高亮引用某变量的步骤（顶栏快捷键说明）</li>
+      <li><strong>变量批量编辑</strong>：多选变量后统一勾选「保存状态 / 输入输出 / 保护变量」等高级项（见下方截图）</li>
+      <li><strong>子程序侧栏</strong>：浏览<strong>内部 / 公共 / 网络</strong>子程序；网络子程序可搜索标题、说明、标签，拖入步骤列表插入调用</li>
+      <li><strong>网络共享子程序</strong>：搜索 Quicker 分享库；步骤中 <code>@@</code> 绑定显示可读名称；编辑「调用子程序」时可加载网络子程序的输入/输出变量</li>
+      <li><strong>全局子程序</strong>：主程序与子程序在多标签中切换编辑</li>
+      <li><strong>撤销 / 重做</strong>：步骤与变量共用历史（<kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd>）</li>
+      <li><strong>首页与检索</strong>：最近编辑的动作、按标题/描述搜索后一键进入设计</li>
+      <li><strong>保存与冲突</strong>：<kbd>Ctrl</kbd>+<kbd>S</kbd> 或顶栏保存到 Quicker；若与 Quicker 侧已有改动会提示是否覆盖</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>使用说明</h2>
+    <ol>
+      <li>在 Quicker 中安装并触发本动作，打开<strong>动作设计器</strong>（需配合设计器宿主与 WebView2 环境）</li>
+      <li>在首页通过<strong>搜索</strong>或<strong>最近编辑</strong>进入要设计的动作；点击左上角图标可<strong>返回主界面</strong></li>
+      <li>在步骤区维护步骤列表，在弹窗中配置参数；侧栏选用内部/公共/网络子程序并拖入步骤</li>
+      <li>在变量区维护变量，可多选后批量编辑高级选项</li>
+      <li>完成后<strong>保存到 Quicker</strong>；离开页面前请处理「未保存」提示</li>
+    </ol>
+    <p class="qk-footnote">顶栏标注为「Web 预览版 · 动作与变量设计器」；功能持续迭代，欢迎讨论区反馈。</p>
+  </section>
+
+  <section class="qk-section">
+    <h2>变量批量编辑</h2>
+    <p>在变量列表中多选若干项，即可在批量编辑面板中统一修改高级布尔属性（混合状态显示为三态复选框）：</p>
+    <p>
+      <img
+        src="https://files.getquicker.net/_sitefiles/kb/sharedaction/ef0072be-75b3-4a8c-d36b-08deb290d444/2026/05/16/213044_113342_image.png"
+        alt="多选变量后的批量编辑界面截图"
+      >
+    </p>
+  </section>
+
+  <section class="qk-section">
+    <h2>最近更新</h2>
+    <table>
+      <thead>
+        <tr><th>版本</th><th>要点</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>v0.3.5</td>
+          <td>插件 / 设计器宿主版本同步至 0.3.5（持续改进中）</td>
+        </tr>
+        <tr>
+          <td>v0.3.4</td>
+          <td>网络共享子程序侧栏展示标题、说明与版本；分享库搜索防抖；多 Quicker 版本下加载兼容性改进</td>
+        </tr>
+        <tr>
+          <td>v0.3.0</td>
+          <td>分享库搜索浏览网络子程序；<code>@@</code> 绑定显示名称；加载网络子程序 IO；变量/常量编辑切换；表达式多行框自适应高度；关闭步骤弹窗确认</td>
+        </tr>
+        <tr>
+          <td>v0.2.0</td>
+          <td>插件打开网页设计器、保存回 Quicker、全局子程序标签、最近编辑与搜索、未保存离开确认、步骤类型搜索</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="qk-section">
+    <h2>环境要求</h2>
+    <ul>
+      <li>Windows 10 及以上（推荐 Windows 11）</li>
+      <li>Quicker <strong>1.45.0</strong> 及以上</li>
+      <li><strong>.NET 10</strong> 桌面运行时与 ASP.NET 运行时（见顶部警告）</li>
+      <li><strong>WebView2</strong> 运行时（多数 Win10/11 已自带或可自动安装）</li>
+      <li>设计器宿主（WPF + WebView2）与 Quicker 内插件配合使用</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>常见问题</h2>
+    <ul class="qk-faq">
+      <li><strong>打不开设计器或白屏？</strong><br>先确认已安装 <code>net10-windows-runtime</code> 与 <code>net10-aspnet-runtime</code>，并更新 WebView2；重启 Quicker 与设计器宿主后再试。</li>
+      <li><strong>保存时提示冲突？</strong><br>表示 Quicker 侧动作已被其它途径修改，请确认是否<strong>覆盖</strong>或先在 Quicker 中同步后再保存。</li>
+      <li><strong>网络子程序搜不到？</strong><br>检查网络与 Quicker 版本；v0.3.4 起已改进分享库搜索防抖与兼容性，建议更新到最新修订版。</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>相关链接</h2>
+    <div class="qk-links">
+      <a class="qk-chip" href="https://getquicker.net/Sharedaction?code=ef0072be-75b3-4a8c-d36b-08deb290d444#tab=discuss">讨论区</a>
+      <a class="qk-chip" href="https://getquicker.net/KC/Manual/Doc/settings-actiondesignersettingspage">设计器相关设置</a>
+      <a class="qk-chip" href="https://getquicker.net/KC/Manual/Doc/create-edit-actions">创建和编辑动作</a>
+    </div>
+  </section>
+</div>

@@ -12,9 +12,10 @@ public sealed class QuickerAgentSettings
       "browser-profile");
 
   /// <summary>
-  /// Run browser without UI.
+  /// Run browser without UI. Defaults to true so pull/push do not steal focus.
+  /// Set <c>QKAGENT_HEADLESS=false</c> to show a minimized window for debugging.
   /// </summary>
-  public bool Headless { get; init; }
+  public bool Headless { get; init; } = true;
 
   /// <summary>
   /// Force browser channel: chrome, msedge, edge, chromium (bundled). When null, try chrome → msedge → bundled.
@@ -35,19 +36,26 @@ public sealed class QuickerAgentSettings
           "qkagent",
           "browser-profile")
         : Path.GetFullPath(profile.Trim()),
-      Headless = ParseTruthy(headlessRaw),
+      Headless = ParseHeadless(headlessRaw),
       BrowserChannel = string.IsNullOrWhiteSpace(channel) ? null : channel.Trim(),
     };
   }
 
-  private static bool ParseTruthy(string? value)
+  private static bool ParseHeadless(string? value)
   {
     if (string.IsNullOrWhiteSpace(value))
+    {
+      return true;
+    }
+
+    value = value.Trim();
+    if (value.Equals("0", StringComparison.Ordinal)
+        || value.Equals("false", StringComparison.OrdinalIgnoreCase)
+        || value.Equals("no", StringComparison.OrdinalIgnoreCase))
     {
       return false;
     }
 
-    value = value.Trim();
     return value.Equals("1", StringComparison.Ordinal)
            || value.Equals("true", StringComparison.OrdinalIgnoreCase)
            || value.Equals("yes", StringComparison.OrdinalIgnoreCase);

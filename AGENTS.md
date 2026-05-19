@@ -17,7 +17,7 @@
 1. 将 [env.example](env.example) 复制为 **`.env`**（与 exe 同目录或仓库根等，见程序加载逻辑）。
 2. 必填 **`QUICKER_EMAIL`**、**`QUICKER_PASSWORD`**（账号须为要编辑动作的**作者**）。
 3. 可选：
-   - **`QKAGENT_HEADLESS=true`**：无界面运行；默认有界面。
+   - **`QKAGENT_HEADLESS`**：默认 `true`（无界面、不占焦点）；设为 `false` 时以最小化窗口运行便于调试。
    - **`QKAGENT_PROFILE_DIR`**：浏览器 profile（cookies）；默认 `%LOCALAPPDATA%\qkagent\browser-profile`。
    - **`QKAGENT_BROWSER_CHANNEL`**：强制 `chrome` / `msedge` / `chromium`；默认依次尝试 Chrome → Edge → Playwright Chromium。
 
@@ -28,17 +28,17 @@
 - 优先 **`--json`**；退出码 **0 成功，1 失败**。
 
 ```text
-# 推荐：本地工作流（%USERPROFILE%\.quicker\actions\<sharedId>\info.html）
-qkagent.exe action-doc pull --code <sharedId> [--json]   # 网站 → 本地 info.html
-# 编辑 info.html
-qkagent.exe action-doc push --code <sharedId> [--json]   # 本地 → 网站
+# 推荐：仓库 actions/<sharedId>/doc.yaml → 构建 info.html → push
+qkagent.exe pull --code <sharedId> [--json]
+# 编辑 actions/<sharedId>/page.html（样式见 _shared/intro.css）
+.\scripts\build-action-docs.ps1 [-Id <sharedId>]
+qkagent.exe push --code <sharedId> [--json]
 
 # 底层命令（任意路径）
-qkagent.exe action-doc get (--code <sharedId> [--out <path>] | --dir <folder>) [--json]
-qkagent.exe action-doc upload|set (--code <sharedId> --html <path> | --dir <folder>) [--json]
+qkagent.exe get|upload|set (--code … | --dir …) [--json]
 ```
 
-本地目录可用 **`QKAGENT_ACTIONS_ROOT`** 覆盖（默认 `%USERPROFILE%\.quicker\actions`）。工作流 Skill：[`.cursor/skills/action-doc-workflow/SKILL.md`](.cursor/skills/action-doc-workflow/SKILL.md)。
+本地根目录默认 **`<repo>/actions`**（存在 `actions/README.md` 时），否则 `%USERPROFILE%\.quicker\actions`；可用 **`QKAGENT_ACTIONS_ROOT`** 覆盖。构建说明见 [actions/README.md](actions/README.md)。工作流 Skill：[`.cursor/skills/action-doc-workflow/SKILL.md`](.cursor/skills/action-doc-workflow/SKILL.md)。
 
 ## 4. 架构要点
 

@@ -1,54 +1,41 @@
 ---
 name: action-doc-workflow
 description: >-
-  Edit getquicker.net action intro HTML via local ~/.quicker/actions/<id>/info.html:
-  qkagent action-doc pull, user edits, then action-doc push.
+  Edit actions/<id>/page.html + shared intro.css, build info.html, qkagent push.
 disable-model-invocation: false
 ---
 
 # 修改动作说明工作流
 
-## 本地目录约定
+## 文件
 
 | 路径 | 说明 |
 |------|------|
-| `%USERPROFILE%\.quicker\actions\<sharedId>\info.html` | 从网站拉取的简介 HTML（默认文件名） |
-| `%USERPROFILE%\.quicker\actions\<sharedId>\meta.yaml` | `pull` 时写入：`sharedId`、`html: info.html` |
+| `actions/_shared/intro.css` | 统一样式表 |
+| `actions/<sharedId>/page.html` | **源 HTML**（class 语义化，无 inline style） |
+| `actions/<sharedId>/info.html` | **构建产物**（CSS 已内联，用于 push） |
 
-可通过环境变量 **`QKAGENT_ACTIONS_ROOT`** 覆盖根目录（仍使用 `<id>/info.html` 子结构）。
+仓库根下自动识别 `actions/`；可设 `QKAGENT_ACTIONS_ROOT=actions`。
 
-与浏览器 profile（`%LOCALAPPDATA%\qkagent\browser-profile`）分离：profile 存登录态，`.quicker\actions` 存可编辑内容。
-
-## 三步流程
-
-1. **拉取**（网站 → 本地）
+## 流程
 
 ```powershell
-qkagent.exe action-doc pull --code "<shared-guid>" --json
+qkagent pull --code "<shared-guid>" --json   # 可选
+# 编辑 page.html（参考 actions/1abfcdc2-…/page.html）
+.\scripts\build-action-docs.ps1 -Id "<shared-guid>"
+qkagent push --code "<shared-guid>" --json
 ```
 
-2. **编辑** `info.html`（按用户要求改文案、结构、样式等）。
+## 样式 class 速查
 
-3. **发布**（本地 → 网站）
+- `qk-doc` 根容器
+- `qk-alert qk-alert--warning` 警告
+- `qk-feedback`、`qk-qq` 反馈行
+- `qk-hero`、`qk-summary` 标题区
+- `qk-section` 章节；`qk-links`、`qk-chip` 底部链接
 
-```powershell
-qkagent.exe action-doc push --code "<shared-guid>" --json
-```
-
-## 与底层命令的关系
-
-| 工作流 | 等价底层 |
-|--------|----------|
-| `pull` | `get --code <id> --out <actionsRoot>/<id>/info.html` + 写 `meta.yaml` |
-| `push` | `upload --code <id> --html <actionsRoot>/<id>/info.html` |
-
-仍可使用 `get` / `upload` / `--dir`（仓库内 `samples/action-doc`）做项目内管理。
-
-## 前置
-
-- `qkagent.exe` 已发布，`.env` 含 `QUICKER_EMAIL` / `QUICKER_PASSWORD`。
-- 账号为动作作者。
+`<code>` / `<kbd>` 样式见 `intro.css`。
 
 ## 文档
 
-[README.md](../../../README.md)、[AGENTS.md](../../../AGENTS.md)
+[actions/README.md](../../../actions/README.md)

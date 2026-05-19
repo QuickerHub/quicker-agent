@@ -1,0 +1,61 @@
+<div class="qk-doc">
+  <div class="qk-alert qk-alert--warning">
+    <strong>注意：</strong>删除操作不可恢复。清理前请确认 Quicker 未正在使用相关依赖，必要时先关闭 Quicker 或相关动作。
+  </div>
+
+  <p class="qk-feedback">
+    交流反馈：剪贴板动作 QQ 群 <span class="qk-qq">824753837</span>
+  </p>
+
+  <header class="qk-hero">
+    <h1>依赖管理</h1>
+    <p class="qk-summary">图形化浏览与清理 Quicker <code>_packages</code> 缓存目录，快速释放磁盘空间，删除历史版本依赖包。</p>
+  </header>
+
+  <section class="qk-section">
+    <h2>主要功能</h2>
+    <ul>
+      <li><strong>双栏浏览</strong>：左侧列出各依赖包文件夹，右侧显示该包下的版本目录与根目录松散文件</li>
+      <li><strong>一键清理旧版本</strong>：对每个包仅保留可解析的最高版本文件夹，删除更低版本（根目录松散文件不处理）</li>
+      <li><strong>精细删除</strong>：可删除所选版本/文件，或整个包文件夹（含全部版本）</li>
+      <li><strong>路径可配</strong>：默认 <code>文档\Quicker\_packages</code>，支持浏览选择其他目录</li>
+      <li><strong>快捷操作</strong>：刷新列表、在资源管理器中打开当前目录</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>使用说明</h2>
+    <ol>
+      <li>在 Quicker 面板安装动作后触发，确认顶部路径指向你的 <code>_packages</code> 目录</li>
+      <li>在左侧选中一个或多个包；右侧可查看并勾选要删除的版本</li>
+      <li>需要批量瘦身时，选中包后点击<strong>一键清理旧版本</strong>（每个包各自保留最高版本）</li>
+      <li>底部状态栏会显示包数量与版本/文件条目统计，便于评估可清理空间</li>
+    </ol>
+  </section>
+
+  <section class="qk-section">
+    <h2>环境要求</h2>
+    <ul>
+      <li>Windows 10 及以上</li>
+      <li><a href="https://dotnet.microsoft.com/download/dotnet-framework/net472">.NET Framework 4.7.2</a> 或更高</li>
+      <li>Quicker <strong>1.45.0</strong> 及以上</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>常见问题</h2>
+    <ul>
+      <li><strong>删除失败</strong>：文件可能被 Quicker 占用，关闭 Quicker 后重试</li>
+      <li><strong>无法清理旧版本</strong>：该包下可解析的版本文件夹少于 2 个时会跳过</li>
+      <li><strong>路径不对</strong>：点击「浏览」手动选择实际的 <code>_packages</code> 位置</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>相关链接</h2>
+    <div class="qk-links">
+      <a class="qk-chip" href="https://github.com/ceastld/quicker-packages-manager">GitHub 源码</a>
+      <a class="qk-chip" href="https://getquicker.net/Share/ActionLists/List?id=8b738f39-1d88-4e63-af27-08da0d4ec4b7">Cea 系列扩展动作</a>
+    </div>
+  </section>
+</div>

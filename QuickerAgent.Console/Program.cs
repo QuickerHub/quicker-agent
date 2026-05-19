@@ -111,7 +111,7 @@ internal static class Program
       "get" => await RunActionDocGetAsync(options, loggerFactory).ConfigureAwait(false),
       "pull" => await RunActionDocPullAsync(options, loggerFactory).ConfigureAwait(false),
       "upload" or "set" => await RunActionDocUploadAsync(options, loggerFactory).ConfigureAwait(false),
-      "push" => await RunActionDocPushAsync(options, loggerFactory).ConfigureAwait(false),
+      "push" or "apply" => await RunActionDocPushAsync(options, loggerFactory).ConfigureAwait(false),
       _ => await UnknownVerbAsync(options).ConfigureAwait(false),
     };
   }
@@ -121,7 +121,7 @@ internal static class Program
     await EmitErrorAsync(
         options.Json,
         "UNKNOWN_ACTION_DOC_VERB",
-        "Use: action-doc pull|push|get|upload|set (--code <sharedId> | --dir <folder>) [--json]")
+        "Use: pull|push|apply|get|upload|set (--code <sharedId> | --dir <folder>) [--json]")
       .ConfigureAwait(false);
     return ExitCodes.Error;
   }
@@ -313,12 +313,23 @@ internal static class Program
       return ExitCodes.Error;
     }
 
+    var pagePath = Path.Combine(store.GetActionDirectory(sharedId), ActionLocalStore.PageHtmlFileName);
+    if (File.Exists(pagePath))
+    {
+      if (!ActionDocBuildRunner.TryBuild(store.ActionsRoot, sharedId, out var buildError))
+      {
+        await EmitErrorAsync(options.Json, "ACTION_DOC_BUILD_ERROR", buildError ?? "Build failed.")
+          .ConfigureAwait(false);
+        return ExitCodes.Error;
+      }
+    }
+
     if (!File.Exists(htmlPath))
     {
       await EmitErrorAsync(
           options.Json,
           "LOCAL_INFO_NOT_FOUND",
-          $"No local description at '{htmlPath}'. Run: action-doc pull --code {sharedId}")
+          $"No local description at '{htmlPath}'. Add page.html and build, or run: action-doc pull --code {sharedId}")
         .ConfigureAwait(false);
       return ExitCodes.Error;
     }
@@ -328,7 +339,7 @@ internal static class Program
         sharedId,
         htmlPath,
         loggerFactory,
-        jsonActionName: "push")
+        jsonActionName: options.Action?.Trim().ToLowerInvariant() is "apply" ? "apply" : "push")
       .ConfigureAwait(false);
   }
 
@@ -546,7 +557,7 @@ internal static class Program
 [Verb("action-doc", HelpText = "Get or update HTML intro text for a shared action on getquicker.net.")]
 public sealed class ActionDocOptions
 {
-  [Value(0, MetaName = "command", Required = true, HelpText = "pull | push | get | upload | set")]
+  [Value(0, MetaName = "command", Required = true, HelpText = "pull | push | apply | get | upload | set")]
   public string? Action { get; set; }
 
   [Option("code", HelpText = "Shared action id (GUID) when not using --dir.")]

@@ -37,6 +37,13 @@ public static class QuickerBrowserLauncher
           .LaunchPersistentContextAsync(settings.ProfileDirectory, options)
           .ConfigureAwait(false);
 
+        if (!settings.Headless)
+        {
+          await QuickerBrowserFocusSuppressor
+            .TrySuppressAsync(context, logger, cancellationToken)
+            .ConfigureAwait(false);
+        }
+
         var label = channel ?? "chromium";
         logger.LogInformation(
           "Browser started (channel={Channel}, headless={Headless}, profile={Profile}).",
@@ -77,6 +84,11 @@ public static class QuickerBrowserLauncher
     if (!string.IsNullOrWhiteSpace(channel))
     {
       options.Channel = channel;
+    }
+
+    if (!settings.Headless)
+    {
+      options.Args = QuickerBrowserFocusSuppressor.BackgroundLaunchArgs;
     }
 
     return options;

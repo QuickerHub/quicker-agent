@@ -1,0 +1,83 @@
+<div class="qk-doc">
+  <p class="qk-feedback">
+    交流反馈：剪贴板动作 QQ 群 <span class="qk-qq">824753837</span>（贴边隐藏相关问题也可在此交流）
+  </p>
+
+  <header class="qk-hero">
+    <h1>贴边隐藏</h1>
+    <p class="qk-summary">将当前<strong>前台窗口</strong>贴靠屏幕边缘并自动收起，需要时鼠标移入或获得焦点即可唤出，节省桌面空间又不打断当前操作。</p>
+  </header>
+
+  <section class="qk-section">
+    <h2>主要功能</h2>
+    <ul>
+      <li><strong>四向贴边</strong>：支持上 / 下 / 左 / 右贴靠屏幕边缘隐藏</li>
+      <li><strong>智能暂留</strong>：窗口有焦点时保持展开；鼠标悬停在窗口上时同样暂留，避免误收起</li>
+      <li><strong>延迟显示</strong>：可配置唤出延迟，减少贴边弹出过于灵敏、晃眼的情况</li>
+      <li><strong>统一管理</strong>：管理窗口查看已贴边列表，支持右键菜单「取消所有贴边」</li>
+      <li><strong>子程序调用</strong>：可在组合动作中指定贴边方向或批量取消，便于与其它自动化串联</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>使用说明</h2>
+    <ol>
+      <li>将要隐藏的窗口置于<strong>前台</strong>（当前活动窗口）</li>
+      <li>触发本动作，按提示选择上 / 下 / 左 / 右贴边，或进入管理界面</li>
+      <li>窗口贴边收起后，将鼠标移到屏幕对应边缘或窗口露出区域即可唤出</li>
+      <li>需要恢复全部窗口时，在管理界面或右键菜单使用「取消所有贴边」，或运行 <code>stopAll</code> 命令</li>
+      <li>若感觉弹出过快，可在动作设置中调整<strong>延迟显示</strong>相关选项</li>
+    </ol>
+  </section>
+
+  <section class="qk-section">
+    <h2>子程序与命令参数</h2>
+    <p>子程序：<a href="https://getquicker.net/SubProgram?id=b6a990e8-1c8a-4fae-ddbc-08de2211a7a5">Cea_窗口贴边隐藏</a>。传入命令字符串（英文，请按下表拼写）：</p>
+    <table>
+      <thead>
+        <tr><th>命令</th><th>说明</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>top</code></td><td>上贴边</td></tr>
+        <tr><td><code>bottom</code></td><td>下贴边</td></tr>
+        <tr><td><code>left</code></td><td>左贴边</td></tr>
+        <tr><td><code>right</code></td><td>右贴边</td></tr>
+        <tr><td><code>manage</code></td><td>打开管理窗口</td></tr>
+        <tr><td><code>stopAll</code></td><td>取消所有贴边，恢复窗口位置</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="qk-section">
+    <h2>适用场景</h2>
+    <p>聊天 / 笔记 / 监控小窗贴边 · 多显示器边缘收纳 · 临时隐藏前台工具窗 · 与组合动作联动批量贴边或还原</p>
+  </section>
+
+  <section class="qk-section">
+    <h2>环境要求</h2>
+    <ul>
+      <li>Windows 10 及以上</li>
+      <li>适用于<strong>通用 Windows 窗口</strong>（部分全屏或特殊框架窗口可能不支持）</li>
+      <li>Quicker <strong>1.44.54</strong> 及以上（建议使用最新版）</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>常见问题</h2>
+    <ul class="qk-faq">
+      <li><strong>退出 Quicker 后窗口找不到了？</strong><br>重启 Quicker 后再次运行本动作（任意操作一次即可），退出前处于贴边状态的窗口会恢复。</li>
+      <li><strong>贴边后点击无反应？</strong><br>部分应用内嵌控件（如微信表情面板）可能与贴边交互冲突，可先取消贴边或换用其它边缘。</li>
+      <li><strong>唤出太灵敏、晃眼？</strong><br>在动作设置中增大<strong>延迟显示</strong>；也可在讨论区反馈你的使用场景。</li>
+      <li><strong>「取消所有贴边」无效？</strong><br>请更新到最新修订版（rev.13+ 已支持右键菜单与 <code>stopAll</code>）；仍异常请在讨论区附上 Quicker 版本与复现步骤。</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>相关链接</h2>
+    <div class="qk-links">
+      <a class="qk-chip" href="https://getquicker.net/SubProgram?id=b6a990e8-1c8a-4fae-ddbc-08de2211a7a5">Cea_窗口贴边隐藏 子程序</a>
+      <a class="qk-chip" href="https://getquicker.net/Share/ActionLists/List?id=8b738f39-1d88-4e63-af27-08da0d4ec4b7">Cea 系列扩展动作</a>
+      <a class="qk-chip" href="https://getquicker.net/Sharedaction?code=ffa92a90-6332-42e6-ddbb-08de2211a7a5#tab=discuss">讨论区</a>
+    </div>
+  </section>
+</div>

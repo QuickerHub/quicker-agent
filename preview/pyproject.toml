@@ -6,7 +6,11 @@ requires-python = ">=3.11"
 dependencies = [
   "fastapi>=0.115.0",
   "uvicorn[standard]>=0.32.0",
+  "action-doc-builder",
 ]
+
+[tool.uv.sources]
+action-doc-builder = { path = "../action_doc_builder", editable = true }
 
 [project.scripts]
 qkagent-preview = "preview_server:main"

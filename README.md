@@ -21,7 +21,7 @@ Command-line tool to **get or update HTML** for a [getquicker.net](https://getqu
 | `QKAGENT_HEADLESS` | Optional: `1` / `true` to run without a window (default: headed). |
 | `QKAGENT_PROFILE_DIR` | Optional: persistent browser profile path (cookies). Default: `%LOCALAPPDATA%\qkagent\browser-profile`. |
 | `QKAGENT_BROWSER_CHANNEL` | Optional: force `chrome`, `msedge`, or `chromium`. Default: try Chrome → Edge → Chromium. |
-| `QKAGENT_ACTIONS_ROOT` | Optional: root for **pull/push** local files. Default: `%USERPROFILE%\.quicker\actions`. |
+| `QKAGENT_ACTIONS_ROOT` | Optional: root for **pull/push** local files. Default: `<repo>/actions` when present, else `%USERPROFILE%\.quicker\actions`. |
 
 Page UI labels (编辑信息、源代码、更新动作信息) are fixed in `QuickerAgent.Core/GetQuickerActionDocPage.cs`.
 
@@ -31,19 +31,22 @@ Do not commit `.env`.
 
 ### Edit workflow (recommended)
 
-Local layout: **`%USERPROFILE%\.quicker\actions\<shared-guid>\info.html`** (override with `QKAGENT_ACTIONS_ROOT`).
+Source files live in **[`actions/`](actions/)** — edit **`page.html`** (semantic HTML + CSS classes), build **`info.html`** (inlined styles), then push.
 
 ```powershell
-# 1. Pull from getquicker.net → local info.html
-.\qkagent.exe action-doc pull --code "<shared-guid>" --json
+# 1. Pull from getquicker.net (optional sync)
+.\qkagent.exe pull --code "<shared-guid>" --json
 
-# 2. Edit %USERPROFILE%\.quicker\actions\<shared-guid>\info.html
+# 2. Edit actions/<shared-guid>/page.html  (shared styles: actions/_shared/intro.css)
 
-# 3. Push local file back to the site
-.\qkagent.exe action-doc push --code "<shared-guid>" --json
+# 3. Build info.html (CSS inlined for getquicker.net)
+.\scripts\build-action-docs.ps1 -Id "<shared-guid>"
+
+# 4. Push to getquicker.net
+.\qkagent.exe push --code "<shared-guid>" --json
 ```
 
-Agent-oriented steps: [`.cursor/skills/action-doc-workflow/SKILL.md`](.cursor/skills/action-doc-workflow/SKILL.md).
+See [actions/README.md](actions/README.md) for HTML class reference. Agent skill: [`.cursor/skills/action-doc-workflow/SKILL.md`](.cursor/skills/action-doc-workflow/SKILL.md).
 
 ### Low-level commands
 
