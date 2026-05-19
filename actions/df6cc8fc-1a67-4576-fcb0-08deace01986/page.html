@@ -36,17 +36,71 @@
   </section>
 
   <section class="qk-section">
+    <h2>.NET 10 运行时（ClipHost 必需）</h2>
+    <p>
+      剪贴板后台服务 <strong>ClipHost</strong> 基于 .NET 10，且同时使用 WPF 与 ASP.NET Core。
+      请安装 <strong>Windows Desktop Runtime 10.x</strong> 与 <strong>ASP.NET Core Runtime 10.x</strong> 两项共享运行时；
+      仅安装其中之一时，进程仍可能无法启动。
+    </p>
+    <p class="qk-footnote">
+      与 IntelliTools 内「.NET 10 安装引导」一致；版本号随官方更新，下列直链以 <strong>10.0.8</strong> 为例，其它版本请在
+      <a href="https://dotnet.microsoft.com/en-us/download/dotnet/10.0">.NET 10 官方下载页</a> 选择对应架构。
+    </p>
+
+    <h3>手动下载（直链安装包）</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>运行时</th>
+          <th>Windows x64</th>
+          <th>Windows arm64</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>ASP.NET Core Runtime</strong></td>
+          <td>
+            <a href="https://builds.dotnet.microsoft.com/dotnet/aspnetcore/Runtime/10.0.8/aspnetcore-runtime-10.0.8-win-x64.exe">aspnetcore-runtime-10.0.8-win-x64.exe</a>
+          </td>
+          <td>
+            <a href="https://builds.dotnet.microsoft.com/dotnet/aspnetcore/Runtime/10.0.8/aspnetcore-runtime-10.0.8-win-arm64.exe">aspnetcore-runtime-10.0.8-win-arm64.exe</a>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>Windows Desktop Runtime</strong></td>
+          <td>
+            <a href="https://builds.dotnet.microsoft.com/dotnet/WindowsDesktop/10.0.8/windowsdesktop-runtime-10.0.8-win-x64.exe">windowsdesktop-runtime-10.0.8-win-x64.exe</a>
+          </td>
+          <td>
+            <a href="https://builds.dotnet.microsoft.com/dotnet/WindowsDesktop/10.0.8/windowsdesktop-runtime-10.0.8-win-arm64.exe">windowsdesktop-runtime-10.0.8-win-arm64.exe</a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>命令行安装（winget）</h3>
+    <p>在<strong>提升权限</strong>的命令提示符或 PowerShell 中执行（与 IntelliTools 自动安装相同）：</p>
+    <ul>
+      <li><code>winget install Microsoft.DotNet.AspNetCore.10 --accept-package-agreements --accept-source-agreements</code></li>
+      <li><code>winget install Microsoft.DotNet.DesktopRuntime.10 --accept-package-agreements --accept-source-agreements</code></li>
+    </ul>
+    <p class="qk-footnote">若 winget 不可用，请使用上表直链或官方下载页手动安装。</p>
+  </section>
+
+  <section class="qk-section">
     <h2>使用提示</h2>
     <ul>
       <li>再次触发动作可关闭面板（适合绑定快捷键）</li>
       <li>遇到问题可先查看动作页「讨论」区，或到 QQ 群反馈</li>
       <li>右键动作按钮 → 设置，可调整界面与行为（与稳定版类似）</li>
+      <li>面板内可通过相关入口打开 .NET 10 安装引导（检测是否已安装上述运行时）</li>
     </ul>
   </section>
 
   <section class="qk-section">
     <h2>相关链接</h2>
     <div class="qk-links">
+      <a class="qk-chip" href="https://dotnet.microsoft.com/en-us/download/dotnet/10.0">.NET 10 下载汇总</a>
       <a class="qk-chip" href="https://getquicker.net/Sharedaction?code=9ec53d43-5539-4571-6886-08d8c752bfcb">稳定版「剪贴板」</a>
       <a class="qk-chip" href="https://www.wolai.com/8eizYvWmhibh2dChMY72aW">详细使用文档</a>
       <a class="qk-chip" href="https://getquicker.net/Share/ActionLists/List?id=8b738f39-1d88-4e63-af27-08da0d4ec4b7">Cea 系列扩展动作</a>
