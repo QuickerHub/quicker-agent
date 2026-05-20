@@ -1,0 +1,89 @@
+<div class="qk-doc">
+  <p class="qk-feedback">
+    交流反馈：剪贴板动作 QQ 群 <span class="qk-qq">824753837</span>
+  </p>
+
+  <header class="qk-hero">
+    <h1>剪贴板检视器</h1>
+    <p class="qk-summary">
+      Windows 剪贴板<strong>格式检视</strong>工具：枚举当前数据对象上的全部格式名，按格式查看文本、十六进制或图像预览。除系统剪贴板外，还支持<strong>将拖拽数据直接丢进窗口</strong>分析（弥补 FreeClipboardViewer 等工具不便查看拖拽内容的短板）。
+    </p>
+  </header>
+
+  <section class="qk-section">
+    <h2>界面说明</h2>
+    <p>
+      <img
+        src="https://files.getquicker.net/_sitefiles/kb/sharedaction/fe33cf74-7834-45d8-dd42-08deaef5f4fb/2026/05/11/152249_113342_image.png"
+        alt="剪贴板检视器主界面：左侧格式列表，右侧数据预览"
+      >
+    </p>
+    <ul>
+      <li><strong>左侧「格式」</strong>：列出当前数据对象报告的全部格式名（按字母排序）</li>
+      <li><strong>右侧「数据」</strong>：选中格式后展示内容；图像格式会在上方显示缩略预览</li>
+      <li><strong>顶栏</strong>：「从剪贴板加载」重新读取系统剪贴板；「来源」显示来自剪贴板或拖拽</li>
+      <li><strong>底栏状态</strong>：加载结果、复制格式名等操作提示</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>主要功能</h2>
+    <ul>
+      <li><strong>剪贴板加载</strong>：启动时自动读取；也可随时点击顶栏按钮刷新</li>
+      <li><strong>拖拽分析</strong>：将文件或其它支持拖放的数据拖到窗口任意位置，即可像剪贴板一样检视各格式（顶栏显示「来源: 拖拽」）</li>
+      <li><strong>多类型预览</strong>：纯文本直接显示；<code>FileDrop</code> 显示路径列表；二进制以十六进制转储展示（过大时截断，默认最多约 64KB）</li>
+      <li><strong>图像预览</strong>：识别 <code>BitmapSource</code>、字节流等图像载荷，上方显示预览并附尺寸/像素格式说明</li>
+      <li><strong>复制格式名</strong>：在左侧格式项上右键「复制」，便于写 Quicker 步骤或调试自定义格式 ID</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>使用说明</h2>
+    <ol>
+      <li>在 Quicker 中触发本动作，打开<strong>剪贴板检视器</strong>窗口</li>
+      <li>需要查看<strong>当前剪贴板</strong>：复制目标内容后，点击「从剪贴板加载」（或重新触发动作）</li>
+      <li>需要查看<strong>拖拽数据</strong>：从资源管理器、浏览器或 Quicker 面板等拖入窗口，勿先依赖剪贴板中转</li>
+      <li>在左侧选中感兴趣的格式（如 <code>Unicode Text</code>、<code>HTML Format</code>、应用私有格式），右侧查看解码结果</li>
+      <li>开发动作或排查格式兼容性时，可右键复制格式名到剪贴板备用</li>
+    </ol>
+    <p class="qk-footnote">当前版本 <strong>1.3.0</strong>（以动作包为准）。</p>
+  </section>
+
+  <section class="qk-section">
+    <h2>适用场景</h2>
+    <ul>
+      <li>确认某应用复制/拖放时提供了哪些剪贴板格式</li>
+      <li>对比 Unicode、HTML、RTF 等格式下的实际载荷差异</li>
+      <li>查看图片、文件列表或自定义二进制块的大致内容</li>
+      <li>编写 Quicker「获取剪贴板」相关步骤前，先摸清格式名与数据结构</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>环境要求</h2>
+    <ul>
+      <li>Windows 10 及以上</li>
+      <li><a href="https://dotnet.microsoft.com/download/dotnet-framework/net472">.NET Framework 4.7.2</a> 或更高</li>
+      <li>Quicker <strong>1.39.0</strong> 及以上（建议 <strong>1.45.0</strong>+）</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>常见问题</h2>
+    <ul class="qk-faq">
+      <li><strong>格式列表为空？</strong><br>当前剪贴板可能无数据，或应用未暴露可读格式；先复制/拖入有效内容后再加载。</li>
+      <li><strong>某格式显示 GetData 失败？</strong><br>部分格式仅对「所有者」可读，或需要特定线程/延迟，属应用限制，可换源应用重试。</li>
+      <li><strong>二进制只有十六进制？</strong><br>非文本且无法解码为图像时，会以十六进制转储显示；超长内容会自动截断。</li>
+      <li><strong>与 FreeClipboardViewer 的区别？</strong><br>本工具侧重<strong>拖拽数据</strong>与 Quicker 联动；若只需查看常规剪贴板，二者可互补使用。</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>相关链接</h2>
+    <div class="qk-links">
+      <a class="qk-chip" href="https://github.com/ceastld/ClipboardInspector">GitHub 源码</a>
+      <a class="qk-chip" href="https://getquicker.net/Sharedaction?code=fe33cf74-7834-45d8-dd42-08deaef5f4fb#tab=discuss">讨论区</a>
+      <a class="qk-chip" href="https://getquicker.net/Share/ActionLists/List?id=8b738f39-1d88-4e63-af27-08da0d4ec4b7">Cea 系列扩展动作</a>
+    </div>
+  </section>
+</div>

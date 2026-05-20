@@ -1,0 +1,93 @@
+<div class="qk-doc">
+  <p class="qk-feedback">
+    交流反馈：剪贴板动作 QQ 群 <span class="qk-qq">824753837</span>
+  </p>
+
+  <header class="qk-hero">
+    <h1>动作管理</h1>
+    <p class="qk-summary">
+      在独立 WPF 窗口中<strong>浏览、筛选、排序</strong>面板里的组合动作与公共子程序：支持多规则视图、自定义分组、引用子程序联动筛选，以及运行调试、用量统计与数据体积分析。
+    </p>
+  </header>
+
+  <section class="qk-section">
+    <h2>本版亮点（v2 规则）</h2>
+    <p>
+      相较早期版本，右侧<strong>规则</strong>区可保存多条筛选/排序方案：每条规则独立配置「筛选」与「排序」，点击切换即可在不同视角间快速切换，无需反复改条件。
+    </p>
+    <p>
+      <img
+        src="https://files.getquicker.net/_sitefiles/kb/sharedaction/fce02ff8-f211-4770-ce81-08de230af1c9/2025/11/15/044959_113342_image.png"
+        alt="动作管理窗口右侧规则、排序与筛选区域截图"
+      >
+    </p>
+    <ul>
+      <li><strong>规则</strong>：添加 / 删除 / 重命名（双击或右键），当前规则决定列表展示</li>
+      <li><strong>排序</strong>：按编辑时间、分享时间、名称、大小、使用次数、进程等升序或降序</li>
+      <li><strong>筛选</strong>：动作类型、体积区间、来源（自写/安装）、已分享、网址动作、自动更新、使用次数、关联进程等</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>界面布局</h2>
+    <ul>
+      <li><strong>左侧</strong>：公共子程序列表，可搜索、排序；支持「引用」某子程序后，右侧动作列表仅显示引用它的动作</li>
+      <li><strong>右侧</strong>：动作表格（图标、标题、描述、大小、进程、时间、使用次数等列可调整顺序）</li>
+      <li><strong>底部分组</strong>：自定义分组标签，将动作归类；删除分组不会删除动作本身</li>
+      <li><strong>状态栏</strong>：当前筛选/排序摘要、引用子程序名、列表条数；快捷入口见下文</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>主要功能</h2>
+    <ul>
+      <li><strong>多选与右键</strong>：继承 Quicker 原生动作菜单（编辑、分享等），并扩展分组、复制动作 ID / Data、删除等</li>
+      <li><strong>运行与调试</strong>：列表「运行」弹出层支持直接运行、调试运行及填写运行参数</li>
+      <li><strong>详细信息</strong>：「查看」弹出属性面板，双击文本可复制字段内容</li>
+      <li><strong>刷新</strong>：<kbd>F5</kbd> 或顶栏「刷新」，在 Quicker 中新增/修改动作后同步列表</li>
+      <li><strong>用量统计</strong>：查看动作使用次数等统计信息</li>
+      <li><strong>数据优化分析</strong>：对比动作 Data 优化前后体积，便于瘦身（单条或批量入口）</li>
+      <li><strong>动作回收站</strong>：管理已删除动作的恢复与清理</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>使用说明</h2>
+    <ol>
+      <li>在 Quicker 面板安装本动作并触发，打开<strong>动作管理</strong>窗口</li>
+      <li>顶栏搜索框按标题、描述、进程名快速过滤；需要按子程序反查引用时，用「引用」选择公共子程序</li>
+      <li>右侧添加规则并配置筛选/排序；切换规则即可切换列表视角</li>
+      <li>底部分组可新建、重命名、删除；右键动作可「添加到分组」或从当前分组移除</li>
+      <li>双击动作行或右键菜单进入 Quicker 常规编辑流程；改完后记得 <kbd>F5</kbd> 刷新</li>
+    </ol>
+    <p class="qk-footnote">当前插件版本 <strong>1.0.54</strong>（以动作包为准）。</p>
+  </section>
+
+  <section class="qk-section">
+    <h2>环境要求</h2>
+    <ul>
+      <li>Windows 10 及以上</li>
+      <li><a href="https://dotnet.microsoft.com/download/dotnet-framework/net472">.NET Framework 4.7.2</a> 或更高</li>
+      <li>Quicker <strong>1.39.0</strong> 及以上（建议 <strong>1.45.0</strong>+）</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>常见问题</h2>
+    <ul class="qk-faq">
+      <li><strong>列表为空或缺少新动作？</strong><br>在 Quicker 中保存动作后，回到本窗口点击<strong>刷新</strong>（<kbd>F5</kbd>）。</li>
+      <li><strong>规则切换后列表不对？</strong><br>确认当前选中的是目标规则；每条规则的筛选、排序互不影响，可删除无用规则后重建。</li>
+      <li><strong>引用子程序后右侧无动作？</strong><br>表示当前没有动作引用该公共子程序；点击「引用」区域的取消即可恢复全部列表。</li>
+      <li><strong>删除分组会丢动作吗？</strong><br>不会。仅移除分组关系，动作仍保留在 Quicker 中。</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>相关链接</h2>
+    <div class="qk-links">
+      <a class="qk-chip" href="https://getquicker.net/Sharedaction?code=fce02ff8-f211-4770-ce81-08de230af1c9#tab=discuss">讨论区</a>
+      <a class="qk-chip" href="https://getquicker.net/Share/ActionLists/List?id=8b738f39-1d88-4e63-af27-08da0d4ec4b7">Cea 系列扩展动作</a>
+      <a class="qk-chip" href="https://getquicker.net/KC/Manual/Doc/create-edit-actions">创建和编辑动作</a>
+    </div>
+  </section>
+</div>
