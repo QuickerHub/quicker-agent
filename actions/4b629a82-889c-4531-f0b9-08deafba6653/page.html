@@ -3,17 +3,22 @@
     交流反馈：剪贴板动作 QQ 群 <span class="qk-qq">824753837</span>
   </p>
 
+  <div class="qk-alert qk-alert--warning">
+    <strong>1.1.1 更新重点</strong>：WebView Markdown 提示页已接入 <code>KaTeX</code>，支持 <strong>行内公式</strong> 与 <strong>块级公式</strong> 渲染；同时改为前端主动上报 <code>uiReady</code> 后再注入 Markdown，减少首屏空白或内容注入过早的问题。
+  </div>
+
   <header class="qk-hero">
     <h1>md 提示</h1>
-    <p class="qk-summary">基于 <strong>WPF + WebView2 + React</strong> 的 Markdown 提示窗口子程序：在组合动作中传入 Markdown 正文即可弹出排版良好的只读提示，支持 GFM 扩展语法与可选底部按钮。</p>
+    <p class="qk-summary">基于 <strong>WPF + WebView2 + React</strong> 的 Markdown 提示窗口子程序：在组合动作中传入 Markdown 正文即可弹出排版良好的只读提示，现已支持 <strong>GFM + LaTeX 公式渲染</strong>，适合展示文档、说明、计算过程与确认信息。</p>
   </header>
 
   <section class="qk-section">
     <h2>主要功能</h2>
     <ul>
+      <li><strong>LaTeX 公式渲染</strong>：基于 <code>remark-math</code> + <code>rehype-katex</code>，支持行内公式 <code>$E = mc^2$</code> 与块级公式 <code>$$\sum_{i=1}^{n} i = \frac{n(n+1)}{2}$$</code></li>
+      <li><strong>长公式可横向滚动</strong>：块级公式区域补充滚动样式，长表达式不会把窗口撑坏，更适合展示推导或矩阵</li>
       <li><strong>Markdown 渲染</strong>：使用 <code>react-markdown</code> + <code>remark-gfm</code>，支持表格、任务列表、删除线、代码块等 GFM 语法</li>
       <li><strong>GitHub 风格排版</strong>：内置 <code>github-markdown-css</code>，阅读体验接近 GitHub 文档页</li>
-      <li><strong>深浅色自适应</strong>：页面主题跟随系统 <code>prefers-color-scheme</code>，暗色环境下同样清晰</li>
       <li><strong>可选底部按钮</strong>：语法与 MessageBox3md 自定义按钮一致，点击后通过子程序返回值带回 <code>Data</code> 字段</li>
       <li><strong>快捷关闭</strong>：按 <kbd>Esc</kbd> 可关闭窗口（无按钮时同样有效）</li>
     </ul>
@@ -21,11 +26,30 @@
 
   <section class="qk-section">
     <h2>子程序说明</h2>
-    <p>本动作发布 <a href="https://getquicker.net/SubProgram?id=77d01e75-9014-4412-e5e1-08deb4db0cf2">WebViewMarkdownTip</a> 子程序（当前版本 <strong>1.1.0</strong>）。在其它组合动作中可直接调用子程序，或使用本动作的示例流程。</p>
+    <p>本动作发布 <a href="https://getquicker.net/SubProgram?id=77d01e75-9014-4412-e5e1-08deb4db0cf2">WebViewMarkdownTip</a> 子程序（当前版本 <strong>1.1.1</strong>）。在其它组合动作中可直接调用子程序，或使用本动作的示例流程。</p>
     <p>托管入口（C#）：<code>Runner.ShowMarkdownTip(markdown, title, buttonDefinitions);</code></p>
-    <p><strong>markdown</strong>：要展示的 Markdown 正文（必填）</p>
+    <p><strong>markdown</strong>：要展示的 Markdown 正文（必填），可直接混写 GFM 与 LaTeX 公式</p>
     <p><strong>title</strong>：窗口标题，省略时为「提示」</p>
     <p><strong>buttonDefinitions</strong>：可选，字符串列表；每行一个按钮，格式与 MessageBox3md 自定义按钮相同，例如 <code>确认(_S)|Ok</code>、<code>取消|Cancel</code></p>
+  </section>
+
+  <section class="qk-section">
+    <h2>公式写法示例</h2>
+    <ul>
+      <li><strong>行内公式</strong>：在正文中直接写 <code>质能方程：$E = mc^2$</code></li>
+      <li><strong>块级公式</strong>：独占一段使用双美元符，例如 <code>$$\int_0^1 x^2\,dx = \frac{1}{3}$$</code></li>
+      <li><strong>适合展示内容</strong>：数学公式、统计指标、正则/语法说明、算法推导、带公式的 API 文档片段</li>
+    </ul>
+    <p class="qk-footnote">说明：公式语法按常见 LaTeX 写法编写即可；复杂表达式建议使用块级公式，阅读效果更好。</p>
+  </section>
+
+  <section class="qk-section">
+    <h2>本次改进</h2>
+    <ul>
+      <li><strong>公式支持</strong>：前端提示页新增 KaTeX 渲染，解决之前只能显示普通 Markdown、无法直接展示公式的问题</li>
+      <li><strong>注入时序优化</strong>：由前端在 UI 初始化完成后主动通知宿主，再注入 Markdown 内容，减少首次打开时内容未挂载完成导致的空白/闪烁</li>
+      <li><strong>版本同步</strong>：测试构建版本号已同步到当前打包产物，便于和运行器引用版本保持一致</li>
+    </ul>
   </section>
 
   <section class="qk-section">
@@ -33,14 +57,15 @@
     <ol>
       <li>安装本动作后，子程序 <strong>WebViewMarkdownTip</strong> 会一并安装到 Quicker</li>
       <li>在组合动作中用「运行子程序」传入 Markdown 文本与标题；需要用户确认时，再传入按钮定义列表</li>
-      <li>窗口为非模态弹出，可调整大小；正文区域可滚动浏览长文档</li>
+      <li>若正文中包含 LaTeX，直接按 Markdown 文本传入即可，无需额外开关</li>
+      <li>窗口为非模态弹出，可调整大小；正文区域与长公式区域均可滚动浏览</li>
       <li>首次使用若提示 WebView2 相关错误，请安装 <a href="https://developer.microsoft.com/microsoft-edge/webview2/">Microsoft Edge WebView2 运行时</a></li>
     </ol>
   </section>
 
   <section class="qk-section">
     <h2>适用场景</h2>
-    <p>操作结果说明 · 富文本帮助 · 带格式的确认对话框 · 展示 API 返回的 Markdown 文档 · 替代纯文本提示框</p>
+    <p>操作结果说明 · 富文本帮助 · 带格式的确认对话框 · 展示 API 返回的 Markdown 文档 · 展示数学/统计公式 · 替代纯文本提示框</p>
   </section>
 
   <section class="qk-section">
@@ -56,8 +81,9 @@
   <section class="qk-section">
     <h2>常见问题</h2>
     <ul class="qk-faq">
-      <li><strong>窗口空白</strong><br>确认已安装 WebView2；若刚更新子程序，可重启 Quicker 后再试</li>
-      <li><strong>样式异常</strong><br>请使用标准 Markdown / GFM 语法；复杂 HTML 标签不在支持范围内</li>
+      <li><strong>窗口空白</strong><br>确认已安装 WebView2；若刚更新子程序，可重启 Quicker 后再试。新版已优化宿主注入时序，可减少首次打开空白问题</li>
+      <li><strong>公式没有渲染</strong><br>检查是否使用了正确的 LaTeX 分隔符：行内使用 <code>$...$</code>，块级使用 <code>$$...$$</code></li>
+      <li><strong>样式异常</strong><br>请使用标准 Markdown / GFM / LaTeX 语法；复杂 HTML 标签不在支持范围内</li>
       <li><strong>按钮无响应</strong><br>检查按钮定义每行格式是否为「标题|Data」，并与 MessageBox3md 自定义按钮写法保持一致</li>
     </ul>
   </section>

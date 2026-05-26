@@ -1,14 +1,17 @@
 /* Quicker action intro — built into info.html via css_inline.
-   Uses getquicker.net site.css variables on html[data-theme] (light/dark/auto). */
+   Published HTML is sanitized and class names may be stripped, so the final
+   page mostly relies on inline styles only. Keep every declaration self-contained
+   with: site variable -> generic framework variable -> resilient fallback. */
 
 .qk-doc {
   max-width: 720px;
   margin: 0 auto;
   padding: 24px 20px 32px;
   font-family: "Microsoft YaHei", system-ui, -apple-system, sans-serif;
-  color: var(--text-primary, #262626);
+  color: var(--text-primary, var(--bs-body-color, inherit));
   line-height: 1.65;
-  background: var(--bg-secondary, #f8f9fa);
+  background: var(--bg-secondary, var(--bs-secondary-bg, color-mix(in srgb, currentColor 4%, transparent)));
+  color-scheme: light dark;
 }
 
 .qk-alert {
@@ -19,46 +22,46 @@
 }
 
 .qk-alert--warning {
-  background: var(--warning-bg, #fffbe6);
-  border: 1px solid var(--border-dark, #d9d9d9);
-  color: var(--text-primary, #262626);
+  background: var(--warning-bg, color-mix(in srgb, #f59e0b 14%, transparent));
+  border: 1px solid var(--border-dark, var(--bs-border-color, color-mix(in srgb, currentColor 28%, transparent)));
+  color: var(--text-primary, var(--bs-body-color, inherit));
 }
 
 .qk-feedback {
   margin-bottom: 24px;
   padding: 14px 16px;
   border-radius: 8px;
-  background: var(--bg-card, #ffffff);
-  border: 1px solid var(--border-color, #e0e0e0);
-  color: var(--text-secondary, #595959);
+  background: var(--bg-card, var(--bs-card-bg, color-mix(in srgb, currentColor 3%, transparent)));
+  border: 1px solid var(--border-color, var(--bs-border-color, color-mix(in srgb, currentColor 18%, transparent)));
+  color: var(--text-secondary, var(--bs-secondary-color, color-mix(in srgb, currentColor 78%, transparent)));
   font-size: 14px;
 }
 
 .qk-feedback .qk-qq {
   font-family: ui-monospace, monospace;
   font-weight: 600;
-  color: var(--text-primary, #262626);
+  color: var(--text-primary, var(--bs-body-color, inherit));
 }
 
 .qk-hero {
   text-align: left;
   margin-bottom: 28px;
   padding-bottom: 20px;
-  border-bottom: 1px solid var(--border-color, #e0e0e0);
+  border-bottom: 1px solid var(--border-color, var(--bs-border-color, color-mix(in srgb, currentColor 18%, transparent)));
 }
 
 .qk-hero h1 {
   margin: 0 0 8px;
   font-size: 26px;
   font-weight: 600;
-  color: var(--text-primary, #262626);
+  color: var(--text-primary, var(--bs-body-color, inherit));
   letter-spacing: -0.02em;
 }
 
 .qk-summary {
   margin: 0;
   font-size: 15px;
-  color: var(--text-muted, #a0a0a0);
+  color: var(--text-muted, color-mix(in srgb, currentColor 58%, transparent));
 }
 
 .qk-section {
@@ -69,13 +72,13 @@
   margin: 0 0 12px;
   font-size: 15px;
   font-weight: 600;
-  color: var(--text-primary, #262626);
+  color: var(--text-primary, var(--bs-body-color, inherit));
 }
 
 .qk-section p {
   margin: 0;
   font-size: 14px;
-  color: var(--text-secondary, #595959);
+  color: var(--text-secondary, var(--bs-secondary-color, color-mix(in srgb, currentColor 78%, transparent)));
 }
 
 .qk-section p + p {
@@ -86,7 +89,7 @@
 .qk-section ol {
   margin: 0;
   padding-left: 18px;
-  color: var(--text-secondary, #595959);
+  color: var(--text-secondary, var(--bs-secondary-color, color-mix(in srgb, currentColor 78%, transparent)));
   font-size: 14px;
 }
 
@@ -99,44 +102,44 @@
 }
 
 .qk-section strong {
-  color: var(--text-primary, #262626);
+  color: var(--text-primary, var(--bs-body-color, inherit));
 }
 
 .qk-section a {
-  color: var(--link-color, #286da8);
+  color: var(--link-color, var(--bs-link-color, #286da8));
   text-decoration: none;
 }
 
 .qk-section a:hover {
-  color: var(--link-hover, #1d5a8a);
+  color: var(--link-hover, var(--bs-link-hover-color, #1d5a8a));
 }
 
 .qk-section img {
   max-width: 100%;
   height: auto;
   border-radius: 8px;
-  border: 1px solid var(--border-color, #e0e0e0);
+  border: 1px solid var(--border-color, var(--bs-border-color, color-mix(in srgb, currentColor 18%, transparent)));
 }
 
 .qk-section table {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
-  color: var(--text-secondary, #595959);
+  color: var(--text-secondary, var(--bs-secondary-color, color-mix(in srgb, currentColor 78%, transparent)));
 }
 
 .qk-section th {
   text-align: left;
   padding: 8px 10px;
-  border: 1px solid var(--border-color, #e0e0e0);
-  color: var(--text-primary, #262626);
+  border: 1px solid var(--border-color, var(--bs-border-color, color-mix(in srgb, currentColor 18%, transparent)));
+  color: var(--text-primary, var(--bs-body-color, inherit));
   font-weight: 600;
-  background: var(--bg-tertiary, #f0f0f0);
+  background: var(--bg-tertiary, color-mix(in srgb, currentColor 6%, transparent));
 }
 
 .qk-section td {
   padding: 8px 10px;
-  border: 1px solid var(--border-color, #e0e0e0);
+  border: 1px solid var(--border-color, var(--bs-border-color, color-mix(in srgb, currentColor 18%, transparent)));
 }
 
 .qk-links {
@@ -149,20 +152,20 @@
   font-size: 14px;
   padding: 8px 12px;
   border-radius: 8px;
-  border: 1px solid var(--border-color, #e0e0e0);
-  background: var(--bg-card, #ffffff);
-  color: var(--text-primary, #262626);
+  border: 1px solid var(--border-color, var(--bs-border-color, color-mix(in srgb, currentColor 18%, transparent)));
+  background: var(--bg-card, var(--bs-card-bg, color-mix(in srgb, currentColor 3%, transparent)));
+  color: var(--text-primary, var(--bs-body-color, inherit));
   text-decoration: none;
 }
 
 .qk-chip:hover {
-  background: var(--bg-hover, #f0f0f0);
+  background: var(--bg-hover, color-mix(in srgb, currentColor 8%, transparent));
 }
 
 .qk-footnote {
   margin: 12px 0 0;
   font-size: 13px;
-  color: var(--text-muted, #a0a0a0);
+  color: var(--text-muted, color-mix(in srgb, currentColor 58%, transparent));
 }
 
 .qk-doc code,
@@ -171,13 +174,13 @@
   font-size: 12px;
   padding: 2px 6px;
   border-radius: 4px;
-  color: var(--code-text, #262626);
-  background-color: var(--bg-code, rgba(0, 0, 0, 0.06));
-  border: 1px solid var(--code-border, rgba(0, 0, 0, 0.08));
+  color: var(--code-text, var(--text-primary, var(--bs-body-color, inherit)));
+  background-color: var(--bg-code, color-mix(in srgb, currentColor 10%, transparent));
+  border: 1px solid var(--code-border, color-mix(in srgb, currentColor 16%, transparent));
 }
 
 .qk-alert a {
-  color: var(--link-color, #286da8);
+  color: var(--link-color, var(--bs-link-color, #286da8));
   font-weight: 600;
   text-decoration: none;
 }
@@ -186,9 +189,9 @@
   margin-bottom: 20px;
   padding: 16px 18px;
   border-radius: 10px;
-  background: var(--bg-tertiary, #f0f0f0);
-  color: var(--text-primary, #262626);
-  border: 1px solid var(--border-color, #e0e0e0);
+  background: var(--bg-tertiary, color-mix(in srgb, currentColor 6%, transparent));
+  color: var(--text-primary, var(--bs-body-color, inherit));
+  border: 1px solid var(--border-color, var(--bs-border-color, color-mix(in srgb, currentColor 18%, transparent)));
 }
 
 .qk-banner__row {
@@ -203,7 +206,7 @@
   font-size: 12px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-muted, #a0a0a0);
+  color: var(--text-muted, color-mix(in srgb, currentColor 58%, transparent));
   margin-bottom: 4px;
 }
 
@@ -214,12 +217,12 @@
 
 .qk-banner__title em {
   font-style: normal;
-  color: var(--link-color, #286da8);
+  color: var(--link-color, var(--bs-link-color, #286da8));
 }
 
 .qk-banner__desc {
   font-size: 13px;
-  color: var(--text-secondary, #595959);
+  color: var(--text-secondary, var(--bs-secondary-color, color-mix(in srgb, currentColor 78%, transparent)));
   margin-top: 4px;
 }
 
@@ -227,17 +230,17 @@
   display: inline-block;
   padding: 10px 16px;
   border-radius: 8px;
-  background: var(--bg-card, #ffffff);
-  color: var(--text-primary, #262626);
+  background: var(--bg-card, var(--bs-card-bg, color-mix(in srgb, currentColor 3%, transparent)));
+  color: var(--text-primary, var(--bs-body-color, inherit));
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
-  border: 1px solid var(--border-color, #e0e0e0);
+  border: 1px solid var(--border-color, var(--bs-border-color, color-mix(in srgb, currentColor 18%, transparent)));
 }
 
 .qk-banner__cta:hover {
-  background: var(--bg-hover, #f0f0f0);
+  background: var(--bg-hover, color-mix(in srgb, currentColor 8%, transparent));
 }
 
 .qk-callout {
@@ -245,12 +248,12 @@
   margin-top: 12px;
   padding: 10px 12px;
   border-radius: 8px;
-  background: var(--bg-card, #ffffff);
-  border: 1px solid var(--border-color, #e0e0e0);
+  background: var(--bg-card, var(--bs-card-bg, color-mix(in srgb, currentColor 3%, transparent)));
+  border: 1px solid var(--border-color, var(--bs-border-color, color-mix(in srgb, currentColor 18%, transparent)));
 }
 
 .qk-callout a {
-  color: var(--text-primary, #262626);
+  color: var(--text-primary, var(--bs-body-color, inherit));
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
@@ -260,7 +263,7 @@
   margin: 22px 0 10px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--text-primary, #262626);
+  color: var(--text-primary, var(--bs-body-color, inherit));
 }
 
 .qk-faq li {
@@ -272,5 +275,5 @@
 }
 
 .qk-hero .qk-accent {
-  color: var(--link-color, #286da8);
+  color: var(--link-color, var(--bs-link-color, #286da8));
 }
