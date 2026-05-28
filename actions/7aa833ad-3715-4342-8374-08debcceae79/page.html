@@ -1,0 +1,100 @@
+<div class="qk-doc">
+  <div class="qk-alert qk-alert--warning">
+    <strong>测试版说明：</strong>本动作为 IntelliTools <strong>n10 重构版</strong>中的「捷径面板」预览，功能迭代较快。日常主力剪贴板请使用
+    <a href="https://getquicker.net/Sharedaction?code=9ec53d43-5539-4571-6886-08d8c752bfcb">稳定版「剪贴板」</a>；面板与
+    <a href="https://getquicker.net/Sharedaction?code=df6cc8fc-1a67-4576-fcb0-08deace01986">剪贴板 n10</a> 共用同一套本地服务。
+  </div>
+
+  <p class="qk-feedback">
+    交流反馈：剪贴板动作 QQ 群 <span class="qk-qq">824753837</span>
+  </p>
+
+  <header class="qk-hero">
+    <h1>捷径面板 <span class="qk-accent">n10</span></h1>
+    <p class="qk-summary">
+      把<strong>收藏夹</strong>里的文本、链接、文件、文件夹与 Quicker 动作，以可自定义布局的<strong>超级面板</strong>形式快速唤出；单击即可粘贴或执行，尽量不抢占当前窗口焦点。
+    </p>
+  </header>
+
+  <section class="qk-section">
+    <h2>主要功能</h2>
+    <ul>
+      <li><strong>收藏即面板</strong>：每个「面板根」对应一组收藏；支持多面板根，左侧树形导航切换</li>
+      <li><strong>文件夹层级</strong>：收藏夹可嵌套；进入子文件夹浏览，支持返回上一级</li>
+      <li><strong>多种布局</strong>：大图标、条带、紧凑列表等样式；窗口尺寸变化时可自动选用更合适的布局</li>
+      <li><strong>一键执行</strong>：单击条目粘贴文本、打开链接/路径，或运行 Quicker 动作（依条目类型而定）</li>
+      <li><strong>多选批处理</strong>：<kbd>Ctrl</kbd> / <kbd>Shift</kbd> 多选后，可批量粘贴、复制或移除</li>
+      <li><strong>拖拽排序</strong>：在同一层内拖动条目调整顺序</li>
+      <li><strong>右键维护</strong>：空白处可添加文本、批量文本、链接、文件/文件夹等；条目上可重命名、进入子夹、粘贴/复制/移除</li>
+      <li><strong>键盘导航</strong>：方向键移动焦点，<kbd>Enter</kbd> 执行当前项；<kbd>Home</kbd> / <kbd>End</kbd> 跳到首尾</li>
+      <li><strong>低打扰唤出</strong>：面板显示时尽量不抢走前台焦点，便于边浏览边选择</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>界面说明</h2>
+    <ul>
+      <li><strong>单面板</strong>：仅一个收藏根时，主区域直接展示该面板下的条目与文件夹</li>
+      <li><strong>多面板总览</strong>：配置了多个面板根时，左侧为可展开的树形导航，右侧为当前面板内容</li>
+      <li><strong>可拖曳分栏</strong>：总览模式下左侧导航宽度可拖动，宽度会保存在本地</li>
+      <li><strong>置顶</strong>：可将面板窗口置顶，避免被其它窗口遮挡（具体以动作设置为准）</li>
+    </ul>
+    <p class="qk-footnote">界面由 IntelliTools 网页前端渲染；与剪贴板 n10 共用 ClipHost 本地服务。</p>
+  </section>
+
+  <section class="qk-section">
+    <h2>使用说明</h2>
+    <ol>
+      <li>安装动作后，在 Quicker 中触发即可打开对应<strong>超级面板</strong>（首次使用需确保剪贴板 n10 / ClipHost 已正常启动）</li>
+      <li>在<strong>设置 → 面板</strong>中配置默认面板、外观与行为（如双击空白关闭等）</li>
+      <li>在<strong>收藏</strong>中整理条目；面板展示的内容与收藏结构同步</li>
+      <li>单击条目执行；文件夹双击或菜单「进入收藏夹」进入下一层</li>
+      <li>在空白处右键可<strong>从剪贴板添加</strong>、添加文本/链接/文件，或按提示从 Quicker 面板<strong>拖拽动作</strong>加入</li>
+      <li>再次触发同一面板动作，或执行 <code>panel toggle</code>，可显示/隐藏窗口</li>
+    </ol>
+    <div class="qk-callout">
+      <a href="quicker:settings:AutoRunActions">打开「自动运行」设置</a>（若需开机自启，请将相关 IntelliTools 动作加入自动运行）
+    </div>
+
+    <h3>小技巧</h3>
+    <ul>
+      <li>多选后于右键菜单批量粘贴，适合连续插入多段文本或路径</li>
+      <li>长列表面板可用方向键快速定位，再按 <kbd>Enter</kbd> 确认</li>
+      <li>自动化场景可使用 <code>panel show -i &lt;id&gt;</code>、<code>panel hide -i &lt;id&gt;</code> 等命令（id 可为新版 GUID 或旧版数字映射）</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>环境要求</h2>
+    <ul>
+      <li>Windows 10 及以上</li>
+      <li>Quicker <strong>1.33.30</strong> 及以上，建议 <strong>1.45.0</strong>+</li>
+      <li>需安装 <strong>.NET 10</strong> 共享运行时（与剪贴板 n10 相同）：<strong>Windows Desktop Runtime 10.x</strong> 与 <strong>ASP.NET Core Runtime 10.x</strong> 两项均需安装</li>
+      <li>建议同时安装 <a href="https://getquicker.net/Sharedaction?code=df6cc8fc-1a67-4576-fcb0-08deace01986">剪贴板 n10</a> 并保持 ClipHost 服务可用</li>
+    </ul>
+    <p class="qk-footnote">
+      运行时安装方式与剪贴板 n10 说明一致，可在剪贴板动作页查看直链与 winget 命令，或通过面板/剪贴板内的 .NET 10 安装引导检测。
+    </p>
+  </section>
+
+  <section class="qk-section">
+    <h2>常见问题</h2>
+    <ul class="qk-faq">
+      <li><strong>面板空白或无法连接？</strong><br>请先确认 ClipHost 已启动（通常需先运行剪贴板 n10 或相关自动运行动作），并检查 .NET 10 两项运行时是否均已安装。</li>
+      <li><strong>找不到某个收藏？</strong><br>确认该条目属于当前面板根对应的收藏树；多面板时请在左侧切换到正确的面板根。</li>
+      <li><strong>如何添加 Quicker 动作？</strong><br>在面板空白处右键查看提示，从 Quicker 面板将动作按钮拖入即可（与收藏夹添加动作方式一致）。</li>
+      <li><strong>与旧版「超级面板」的关系？</strong><br>本版为 n10 重构，界面与命令 <code>panel</code> 与 IntelliTools 前端一致；旧版数字 id 仍可通过命令映射打开。</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>相关链接</h2>
+    <div class="qk-links">
+      <a class="qk-chip" href="https://getquicker.net/Sharedaction?code=df6cc8fc-1a67-4576-fcb0-08deace01986">剪贴板 n10</a>
+      <a class="qk-chip" href="https://getquicker.net/Sharedaction?code=9ec53d43-5539-4571-6886-08d8c752bfcb">稳定版「剪贴板」</a>
+      <a class="qk-chip" href="https://www.wolai.com/rU43LqAXtZ8xDBNHxtKGni">命令调用文档</a>
+      <a class="qk-chip" href="https://www.wolai.com/8eizYvWmhibh2dChMY72aW">详细使用文档</a>
+      <a class="qk-chip" href="https://getquicker.net/Share/ActionLists/List?id=8b738f39-1d88-4e63-af27-08da0d4ec4b7">Cea 系列扩展动作</a>
+    </div>
+  </section>
+</div>
