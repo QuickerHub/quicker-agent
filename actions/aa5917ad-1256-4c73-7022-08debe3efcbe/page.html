@@ -1,0 +1,65 @@
+<div class="qk-doc">
+  <header class="qk-hero">
+    <h1>QuickerRpc</h1>
+    <p class="qk-summary">
+      Quicker 插件 + 命令行客户端：通过<strong>命名管道</strong>与 <strong>StreamJsonRpc</strong>，让外部
+      <code>qkrpc.exe</code> 调用 Quicker 内部插件能力。
+    </p>
+  </header>
+
+  <section class="qk-section">
+    <h2>主要用途</h2>
+    <ul>
+      <li><strong>外部命令调用 Quicker</strong>：CLI 连接动作内加载的插件，由插件在 Quicker 进程内执行实际操作</li>
+      <li><strong>更新分享动作</strong>：当前主要用于调用 <code>ActionEditMgr.UpdateSharedActionAsync</code> 更新已分享动作</li>
+      <li><strong>JSON 输出</strong>：命令行支持 <code>--json</code>，便于脚本、自动化工具和 AI Agent 解析结果</li>
+      <li><strong>本地 RPC 桥接</strong>：默认管道名为 <code>QuickerRpc_Server_QRPC2026</code></li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>架构说明</h2>
+    <p>本动作负责在 Quicker 中加载 <code>QuickerRpc.Plugin</code>，插件启动后监听本机命名管道；外部 <code>qkrpc.exe</code> 作为客户端连接并发起 RPC 调用。</p>
+    <p class="qk-footnote">
+      简化流程：<code>Quicker 插件 DLL</code> → <code>命名管道 / StreamJsonRpc</code> → <code>qkrpc.exe</code>。
+    </p>
+  </section>
+
+  <section class="qk-section">
+    <h2>CLI 示例</h2>
+    <ul>
+      <li>检查插件是否在线：<code>qkrpc ping --json</code></li>
+      <li>更新分享动作：<code>qkrpc action update --id &lt;sharedActionGuid&gt; --changelog "说明" --json</code></li>
+      <li>也可使用 code 参数：<code>qkrpc action update --code &lt;sharedActionGuid&gt; --json</code></li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>使用说明</h2>
+    <ol>
+      <li>安装动作后，先按动作内配置加载 <code>QuickerRpc.Plugin</code> 插件依赖</li>
+      <li>启动插件服务后，在终端执行 <code>qkrpc ping --json</code> 确认连接正常</li>
+      <li>需要自动化更新分享动作时，再执行 <code>qkrpc action update</code> 相关命令</li>
+    </ol>
+    <p class="qk-footnote">
+      <code>qkrpc.exe</code> 为自包含 CLI，发布脚本会输出到 <code>publish/cli</code> 并可追加到用户 PATH。
+    </p>
+  </section>
+
+  <section class="qk-section">
+    <h2>环境要求</h2>
+    <ul>
+      <li>Windows + Quicker 桌面端</li>
+      <li>动作内需加载 <code>QuickerRpc.Plugin</code> 及 <code>QuickerRpc.Contracts</code> 依赖</li>
+      <li>外部命令行需要可访问 <code>qkrpc.exe</code></li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>开源仓库</h2>
+    <p>项目已开源，完整源码、构建脚本、CLI 发布脚本和插件加载说明见 GitHub 仓库。</p>
+    <div class="qk-links">
+      <a class="qk-chip" href="https://github.com/QuickerHub/quicker-rpc">GitHub：QuickerHub/quicker-rpc</a>
+    </div>
+  </section>
+</div>
