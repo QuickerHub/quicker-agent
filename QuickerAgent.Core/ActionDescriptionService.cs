@@ -9,6 +9,8 @@ namespace QuickerAgent.Core;
 /// </summary>
 public sealed class ActionDescriptionService
 {
+  private const int MaxUploadAttempts = 2;
+
   private readonly QuickerWebLoginService _loginService;
   private readonly ILogger<ActionDescriptionService> _logger;
 
@@ -104,38 +106,186 @@ public sealed class ActionDescriptionService
         return ActionDocOperationResult.Success(html);
       }
 
-      var written = await WriteEditorHtmlAsync(page, htmlToWrite!, cancellationToken).ConfigureAwait(false);
-      if (!written)
+      Exception? lastError = null;
+      for (var attempt = 1; attempt <= MaxUploadAttempts; attempt++)
       {
-        return ActionDocOperationResult.Fail(
-          "EDITOR_NOT_FOUND",
-          "Could not write HTML into source textarea after enabling code view.");
+        if (attempt > 1)
+        {
+          _logger.LogWarning(
+            "Upload attempt {Attempt}/{Max} did not finish cleanly; reloading edit page.",
+            attempt,
+            MaxUploadAttempts);
+          var retryNav = await NavigateToEditPageWithLoginRetryAsync(
+              page,
+              email,
+              password,
+              sharedActionCode,
+              cancellationToken)
+            .ConfigureAwait(false);
+          if (!retryNav.Ok)
+          {
+            return retryNav;
+          }
+        }
+
+        if (!await WaitForSummernoteReadyAsync(page, cancellationToken).ConfigureAwait(false))
+        {
+          lastError = new InvalidOperationException("Summernote editor did not become ready.");
+          continue;
+        }
+
+        var writeOutcome = await WriteEditorHtmlAsync(page, htmlToWrite!, cancellationToken).ConfigureAwait(false);
+        if (writeOutcome != WriteEditorOutcome.Success)
+        {
+          lastError = new InvalidOperationException($"Could not write HTML ({writeOutcome}).");
+          continue;
+        }
+
+        if (!await WaitForEditorContentAppliedAsync(page, htmlToWrite!, cancellationToken).ConfigureAwait(false))
+        {
+          lastError = new InvalidOperationException("Editor content was not applied before submit.");
+          continue;
+        }
+
+        var saved = await SubmitEditFormAsync(page, cancellationToken).ConfigureAwait(false);
+        if (!saved)
+        {
+          lastError = new InvalidOperationException("Could not submit the edit form.");
+          continue;
+        }
+
+        await WaitForFormSubmitCompleteAsync(page, cancellationToken).ConfigureAwait(false);
+        if (IsLikelySubmitSuccessPage(page.Url))
+        {
+          return ActionDocOperationResult.Success();
+        }
+
+        lastError = new InvalidOperationException(
+          $"Submit finished but URL still looks like the edit page: {page.Url}");
       }
 
-      var synced = await SyncSourceToPreviewAsync(page, cancellationToken).ConfigureAwait(false);
-      if (!synced)
-      {
-        return ActionDocOperationResult.Fail(
-          "SOURCE_SYNC_FAILED",
-          "Could not sync source HTML back to preview before submit.");
-      }
-
-      var saved = await SubmitEditFormAsync(page, cancellationToken).ConfigureAwait(false);
-      if (!saved)
-      {
-        return ActionDocOperationResult.Fail(
-          "SUBMIT_FAILED",
-          "Could not submit the edit form (primary input or form.requestSubmit).");
-      }
-
-      await WaitForFormSubmitCompleteAsync(page, cancellationToken).ConfigureAwait(false);
-      return ActionDocOperationResult.Success();
+      return ActionDocOperationResult.Fail(
+        "UPLOAD_RETRY_EXHAUSTED",
+        lastError?.Message ?? "Upload failed after retries.");
     }
     catch (Exception ex)
     {
       _logger.LogError(ex, "action-doc operation failed.");
       return ActionDocOperationResult.Fail("ACTION_DOC_ERROR", ex.Message);
     }
+  }
+
+  private enum WriteEditorOutcome
+  {
+    Success,
+    WriteFailed,
+    SyncFailed,
+  }
+
+  private sealed class SummernoteWritePayload
+  {
+    public bool Ok { get; set; }
+
+    public int Len { get; set; }
+
+    public int ExpectedLen { get; set; }
+
+    public string? Reason { get; set; }
+  }
+
+  private static bool IsLikelySubmitSuccessPage(string url)
+  {
+    if (string.IsNullOrEmpty(url))
+    {
+      return false;
+    }
+
+    if (url.Contains(GetQuickerActionDocPage.EditPageUrlFragment, StringComparison.OrdinalIgnoreCase))
+    {
+      return false;
+    }
+
+    return url.Contains("getquicker.net", StringComparison.OrdinalIgnoreCase);
+  }
+
+  private async Task<bool> WaitForSummernoteReadyAsync(IPage page, CancellationToken cancellationToken)
+  {
+    try
+    {
+      await page
+        .WaitForFunctionAsync(
+          ActionDescriptionEditorInterop.IsSummernoteReadyScript,
+          arg: null,
+          options: new PageWaitForFunctionOptions { Timeout = 30_000 })
+        .ConfigureAwait(false);
+      return true;
+    }
+    catch (TimeoutException)
+    {
+      _logger.LogWarning("Timed out waiting for Summernote to initialize.");
+      return false;
+    }
+  }
+
+  private async Task<bool> WaitForEditorContentAppliedAsync(
+    IPage page,
+    string expectedHtml,
+    CancellationToken cancellationToken)
+  {
+    var minLength = Math.Max(32, (int)(expectedHtml.Length * 0.55));
+
+    for (var i = 0; i < 20; i++)
+    {
+      cancellationToken.ThrowIfCancellationRequested();
+
+      var actual = await page
+        .EvaluateAsync<string?>(ActionDescriptionEditorInterop.ReadSummernoteCodeScript)
+        .ConfigureAwait(false);
+
+      if (!string.IsNullOrEmpty(actual) && actual.Length >= minLength)
+      {
+        _logger.LogInformation("Editor content verified ({Length} chars).", actual.Length);
+        return true;
+      }
+
+      await Task.Delay(150, cancellationToken).ConfigureAwait(false);
+    }
+
+    _logger.LogWarning(
+      "Editor content verification timed out (expected at least {MinLength} chars).",
+      minLength);
+    return false;
+  }
+
+  private async Task<bool> TryWriteViaSummernoteApiAsync(IPage page, string htmlContent)
+  {
+    try
+    {
+      var result = await page
+        .EvaluateAsync<SummernoteWritePayload>(
+          ActionDescriptionEditorInterop.WriteSummernoteCodeScript,
+          htmlContent)
+        .ConfigureAwait(false);
+
+      if (result?.Ok == true)
+      {
+        _logger.LogInformation(
+          "Wrote HTML via Summernote API ({Length}/{Expected} chars).",
+          result.Len,
+          result.ExpectedLen);
+        return true;
+      }
+
+      _logger.LogDebug(
+        "Summernote API write skipped or failed ({Reason}).",
+        result?.Reason ?? "unknown");
+    }
+    catch (Exception ex)
+    {
+      _logger.LogDebug(ex, "Summernote API write threw.");
+    }
+
+    return false;
   }
 
   private async Task<ActionDocOperationResult> NavigateToEditPageWithLoginRetryAsync(
@@ -166,7 +316,6 @@ public sealed class ActionDescriptionService
     string sharedActionCode,
     CancellationToken cancellationToken)
   {
-    _ = cancellationToken;
     var editUrl = GetQuickerActionDocPage.ExpandEditPageUrl(sharedActionCode);
     _logger.LogInformation("Opening edit page {Url}", editUrl);
     await page
@@ -201,6 +350,13 @@ public sealed class ActionDescriptionService
       return ActionDocOperationResult.Fail(
         "EDITOR_NOT_FOUND",
         $"Editor not visible: {GetQuickerActionDocPage.EditorWaitSelector}");
+    }
+
+    if (!await WaitForSummernoteReadyAsync(page, cancellationToken).ConfigureAwait(false))
+    {
+      return ActionDocOperationResult.Fail(
+        "EDITOR_NOT_READY",
+        "Summernote did not initialize on the edit page.");
     }
 
     return ActionDocOperationResult.Success();
@@ -300,21 +456,25 @@ public sealed class ActionDescriptionService
       .ConfigureAwait(false);
   }
 
-  private async Task<bool> WriteEditorHtmlAsync(
+  private async Task<WriteEditorOutcome> WriteEditorHtmlAsync(
     IPage page,
     string htmlContent,
     CancellationToken cancellationToken)
   {
-    _ = cancellationToken;
+    if (await TryWriteViaSummernoteApiAsync(page, htmlContent).ConfigureAwait(false))
+    {
+      return WriteEditorOutcome.Success;
+    }
+
     if (!await EnsureSourceCodeViewAsync(page).ConfigureAwait(false))
     {
-      return false;
+      return WriteEditorOutcome.WriteFailed;
     }
 
     var textarea = await FindSourceTextareaAsync(page).ConfigureAwait(false);
     if (textarea is null)
     {
-      return false;
+      return WriteEditorOutcome.WriteFailed;
     }
 
     await textarea.FillAsync(htmlContent).ConfigureAwait(false);
@@ -322,7 +482,13 @@ public sealed class ActionDescriptionService
       .EvaluateAsync<string?>(ActionDescriptionEditorInterop.DispatchSourceInputScript)
       .ConfigureAwait(false);
     _logger.LogInformation("Wrote HTML to source textarea (sync: {Selector}).", dispatched ?? "fill only");
-    return true;
+
+    if (!await SyncSourceToPreviewAsync(page, cancellationToken).ConfigureAwait(false))
+    {
+      return WriteEditorOutcome.SyncFailed;
+    }
+
+    return WriteEditorOutcome.Success;
   }
 
   /// <summary>
@@ -385,10 +551,8 @@ public sealed class ActionDescriptionService
            && !await codeview.IsVisibleAsync().ConfigureAwait(false);
   }
 
-  private async Task<bool> SubmitEditFormAsync(IPage page, CancellationToken cancellationToken)
+  private async Task<ILocator?> FindSubmitButtonAsync(IPage page)
   {
-    _ = cancellationToken;
-
     try
     {
       var byName = page
@@ -396,15 +560,12 @@ public sealed class ActionDescriptionService
         .First;
       if (await byName.IsVisibleAsync().ConfigureAwait(false))
       {
-        await byName.ScrollIntoViewIfNeededAsync().ConfigureAwait(false);
-        await byName.ClickAsync().ConfigureAwait(false);
-        _logger.LogInformation("Clicked submit by accessible name.");
-        return true;
+        return byName;
       }
     }
     catch (Exception ex)
     {
-      _logger.LogDebug(ex, "Submit by accessible name failed.");
+      _logger.LogDebug(ex, "Submit by accessible name lookup failed.");
     }
 
     foreach (var selector in GetQuickerActionDocPage.SubmitSelectors)
@@ -414,15 +575,57 @@ public sealed class ActionDescriptionService
         var submit = page.Locator(selector).First;
         if (await submit.IsVisibleAsync().ConfigureAwait(false))
         {
-          _logger.LogInformation("Clicking submit input ({Selector}).", selector);
-          await submit.ScrollIntoViewIfNeededAsync().ConfigureAwait(false);
-          await submit.ClickAsync().ConfigureAwait(false);
-          return true;
+          return submit;
         }
       }
       catch (Exception ex)
       {
-        _logger.LogDebug(ex, "Submit selector did not work: {Selector}", selector);
+        _logger.LogDebug(ex, "Submit selector lookup failed: {Selector}", selector);
+      }
+    }
+
+    return null;
+  }
+
+  private async Task<bool> SubmitEditFormAsync(IPage page, CancellationToken cancellationToken)
+  {
+    _ = cancellationToken;
+
+    var submit = await FindSubmitButtonAsync(page).ConfigureAwait(false);
+    if (submit is not null)
+    {
+      try
+      {
+        await submit.ScrollIntoViewIfNeededAsync().ConfigureAwait(false);
+        await submit.WaitForAsync(
+          new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10_000 })
+          .ConfigureAwait(false);
+
+        var navigationWait = page.WaitForURLAsync(
+          url => !url.Contains(GetQuickerActionDocPage.EditPageUrlFragment, StringComparison.OrdinalIgnoreCase),
+          new PageWaitForURLOptions { Timeout = 90_000 });
+
+        await submit.ClickAsync().ConfigureAwait(false);
+        _logger.LogInformation("Clicked submit; waiting for navigation away from edit page.");
+
+        try
+        {
+          await navigationWait.ConfigureAwait(false);
+          _logger.LogInformation("Submit navigation completed (url: {Url}).", page.Url);
+          return true;
+        }
+        catch (TimeoutException)
+        {
+          if (!page.Url.Contains(GetQuickerActionDocPage.EditPageUrlFragment, StringComparison.OrdinalIgnoreCase))
+          {
+            _logger.LogInformation("Submit left edit page without URL wait resolving (url: {Url}).", page.Url);
+            return true;
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        _logger.LogDebug(ex, "Submit click with navigation wait failed.");
       }
     }
 

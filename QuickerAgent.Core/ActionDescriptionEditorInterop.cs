@@ -5,6 +5,40 @@ namespace QuickerAgent.Core;
 /// </summary>
 internal static class ActionDescriptionEditorInterop
 {
+  public const string IsSummernoteReadyScript = """
+    () => {
+      const jq = window['jQuery'] || window['$'];
+      const sn = document.querySelector('#SharedActionVm_Detail') || document.querySelector('#summernote');
+      return !!(jq && sn && jq.fn && jq.fn.summernote && document.querySelector('.note-editor.note-frame'));
+    }
+    """;
+
+  public const string WriteSummernoteCodeScript = """
+    (html) => {
+      const jq = window['jQuery'] || window['$'];
+      const sn = document.querySelector('#SharedActionVm_Detail') || document.querySelector('#summernote');
+      if (!jq || !sn || !jq.fn || !jq.fn.summernote) {
+        return { ok: false, reason: 'no-summernote' };
+      }
+      try {
+        if (jq(sn).summernote('codeview.isActivated')) {
+          jq(sn).summernote('codeview.toggle');
+        }
+        jq(sn).summernote('code', html);
+        const actual = jq(sn).summernote('code') || '';
+        const minLen = Math.max(32, Math.floor(html.length * 0.55));
+        return {
+          ok: actual.length >= minLen,
+          len: actual.length,
+          expectedLen: html.length,
+          reason: 'api',
+        };
+      } catch (e) {
+        return { ok: false, reason: String(e) };
+      }
+    }
+    """;
+
   public static string EnsureSourceViewScript => $$"""
     () => {
       const editor = document.querySelector('.note-editor.note-frame');

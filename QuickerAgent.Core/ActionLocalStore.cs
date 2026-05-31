@@ -54,7 +54,46 @@ public sealed class ActionLocalStore
 
   public static string? TryFindRepoRoot()
   {
-    var dir = Directory.GetCurrentDirectory();
+    foreach (var startDir in EnumerateRepoSearchRoots())
+    {
+      var repo = TryFindRepoRootFrom(startDir);
+      if (repo is not null)
+      {
+        return repo;
+      }
+    }
+
+    return null;
+  }
+
+  private static IEnumerable<string> EnumerateRepoSearchRoots()
+  {
+    var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+    string?[] candidates =
+    [
+      Directory.GetCurrentDirectory(),
+      Path.GetDirectoryName(Environment.ProcessPath),
+    ];
+
+    foreach (var candidate in candidates)
+    {
+      if (string.IsNullOrWhiteSpace(candidate))
+      {
+        continue;
+      }
+
+      var fullPath = Path.GetFullPath(candidate);
+      if (seen.Add(fullPath))
+      {
+        yield return fullPath;
+      }
+    }
+  }
+
+  private static string? TryFindRepoRootFrom(string startDir)
+  {
+    var dir = startDir;
     for (var i = 0; i < 12; i++)
     {
       var marker = Path.Combine(dir, RepoActionsFolderName, ActionsReadmeMarker);
