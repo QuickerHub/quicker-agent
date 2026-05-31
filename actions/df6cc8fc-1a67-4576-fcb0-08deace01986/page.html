@@ -10,16 +10,28 @@
 
   <header class="qk-hero">
     <h1>剪贴板 <span class="qk-accent">n10</span></h1>
-    <p class="qk-summary">基于 .NET 10 重构的预览版，在保留剪贴板核心能力的同时，优化唤出体验与键盘操作。</p>
+    <p class="qk-summary">基于 IntelliTools / ClipHost 的 .NET 10 重构预览版，保留剪贴板核心能力，并持续优化唤出定位、键盘操作、全局快捷键与设置体验。</p>
   </header>
 
   <section class="qk-section">
-    <h2>本版亮点</h2>
+    <h2>当前版本重点</h2>
     <ul>
-      <li><strong>类 Win+V 体验</strong>：唤出面板时尽量不抢占当前窗口焦点，边浏览边选粘贴更顺手</li>
-      <li><strong>方向键导航</strong>：列表内可用方向键快速移动、选中条目</li>
+      <li><strong>窗口位置可配置</strong>：可在设置中选择相对光标、屏幕中心等显示位置，适配不同使用习惯</li>
+      <li><strong>唤起定位更稳</strong>：优化前台光标探测与窗口定位逻辑，减少面板出现在意外位置的情况</li>
+      <li><strong>底栏更清爽</strong>：剪贴板页底栏「添加 / 清空 / 设置」改为图标按钮，分类标签与标题栏导航更紧凑</li>
+      <li><strong>全局快捷键</strong>：ClipHost 可在后台注册快捷键，也支持 Win+V 风格唤起（以本机设置和系统占用情况为准）</li>
+      <li><strong>软件信息</strong>：文档页可查看当前运行环境与组件版本，便于排查 ClipHost / 运行时问题</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>核心能力</h2>
+    <ul>
+      <li><strong>类 Win+V 体验</strong>：唤出面板时尽量不抢占当前窗口焦点，边浏览边选择粘贴更顺手</li>
+      <li><strong>方向键导航</strong>：列表内可用方向键快速移动、选中条目，按 <kbd>Enter</kbd> 执行</li>
       <li><strong>快速搜索</strong>：按 <kbd>F</kbd> 聚焦搜索框，在海量记录里迅速定位</li>
-      <li><strong>持续更新</strong>：ClipHost 本地服务、网络子程序兼容等能力在测试版中优先迭代</li>
+      <li><strong>收藏联动</strong>：与捷径面板 n10 共用 ClipHost 本地服务，可复用收藏、面板与本地接口能力</li>
+      <li><strong>持续更新</strong>：ClipHost 本地服务、网络子程序兼容、启动路径对齐等能力会在测试版中优先迭代</li>
     </ul>
   </section>
 
@@ -29,6 +41,7 @@
       <li>最低 Quicker 版本：<strong>1.39.0</strong>，建议使用 <strong>1.45.0</strong> 及以上</li>
       <li>安装后可在面板中触发；建议与稳定版二选一，避免同时常驻冲突</li>
       <li>若需开机自启，请在 Quicker「自动运行」中加入本动作</li>
+      <li>如果使用独立 ClipHost 安装包或开发版路径，IntelliTools 会优先尝试直接启动配置的 ClipHost，不再依赖复制到安装目录后再运行</li>
     </ul>
     <div class="qk-callout">
       <a href="quicker:settings:AutoRunActions">打开「自动运行」设置</a>
@@ -91,6 +104,7 @@
     <h2>使用提示</h2>
     <ul>
       <li>再次触发动作可关闭面板（适合绑定快捷键）</li>
+      <li>在设置中调整窗口位置、Win+V 风格快捷键、外观与其它行为选项</li>
       <li>遇到问题可先查看动作页「讨论」区，或到 QQ 群反馈</li>
       <li>右键动作按钮 → 设置，可调整界面与行为（与稳定版类似）</li>
       <li>面板内可通过相关入口打开 .NET 10 安装引导（检测是否已安装上述运行时）</li>
