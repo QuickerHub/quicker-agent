@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="QuickerAgent.AgentModel/QuickerAgent.AgentModel.csproj" />
   <Project Path="QuickerAgent.Core/QuickerAgent.Core.csproj" />
   <Project Path="QuickerAgent.Console/QuickerAgent.Console.csproj" />
 </Solution>

@@ -2,7 +2,7 @@
 
 Command-line tool to **get or update HTML** for a [getquicker.net](https://getquicker.net) shared action’s web intro. It uses **Playwright** with a **persistent browser profile**, preferring **system Chrome or Edge**, then bundled Chromium. After the first successful login, cookies are reused until the session expires (then the tool logs in again automatically).
 
-**Automation agents:** read **[AGENTS.md](AGENTS.md)** first. Cursor skills: [`.cursor/skills/quicker-agent-exe/SKILL.md`](.cursor/skills/quicker-agent-exe/SKILL.md), [`.cursor/skills/qkagent-publish-exe/SKILL.md`](.cursor/skills/qkagent-publish-exe/SKILL.md).
+**Automation agents:** read **[AGENTS.md](AGENTS.md)** first. CLI discovery: `qkagent help --json`; workflow guide: `qkagent guide get --topic workflow --json`. Human-readable: [docs/cli-commands.md](docs/cli-commands.md). Cursor skills: [`.cursor/skills/quicker-agent-exe/SKILL.md`](.cursor/skills/quicker-agent-exe/SKILL.md), [`.cursor/skills/qkagent-publish-exe/SKILL.md`](.cursor/skills/qkagent-publish-exe/SKILL.md).
 
 ## Requirements
 
@@ -29,22 +29,19 @@ Do not commit `.env`.
 
 ## Usage
 
-### Edit workflow (recommended)
+### pull / push（本仓库 actions/）
 
-Source files live in **[`actions/`](actions/)** — edit **`page.html`** (semantic HTML + CSS classes), build **`info.html`** (inlined styles), then push.
+动作说明在 **`actions/<sharedId>/page.html`** 编写（git）。`push` 构建 `info.html` 并上传。
 
 ```powershell
-# 1. Pull from getquicker.net (optional sync)
-.\qkagent.exe pull --code "<shared-guid>" --json
-
-# 2. Edit actions/<shared-guid>/page.html  (shared styles: actions/_shared/intro.css)
-
-# 3. Build info.html (CSS inlined for getquicker.net)
+# 1. 编辑 actions/<sharedId>/page.html
+# 2. （可选）构建
 .\scripts\build-action-docs.ps1 -Id "<shared-guid>"
-
-# 4. Push to getquicker.net
-.\qkagent.exe push --code "<shared-guid>" --json
+# 3. 发布
+qkagent push --code "<shared-guid>" --json
 ```
+
+`pull` 仅当该动作尚无 `page.html`、需从线上导入时使用。
 
 See [actions/README.md](actions/README.md) for HTML class reference. Agent skill: [`.cursor/skills/action-doc-workflow/SKILL.md`](.cursor/skills/action-doc-workflow/SKILL.md).
 

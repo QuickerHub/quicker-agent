@@ -8,21 +8,28 @@ disable-model-invocation: false
 
 # qkagent.exe
 
+## Agent 入口
+
+```powershell
+qkagent help --json
+qkagent guide get --topic workflow --json
+```
+
 ## 作用
 
-- **`action-doc pull` / `push`**：本地工作流（默认 `%USERPROFILE%\.quicker\actions\<id>\info.html`）。
+- **`action-doc pull` / `push`**：读写 **`<repo>/actions/<id>/`**（自动识别；源文件 `page.html`）。
 - **`action-doc get` / `upload|set`**：任意路径读写 HTML。
 - **抓取路径**：登录 → 动作页 → **编辑信息** → Summernote **源代码**（`.note-codable`）读/写，UTF-8 无 BOM 落盘；失败回退 `summernote('code')`。
 - **发布路径**：`push` / `upload` 写回 HTML 后点击页面底部 **「更新动作信息」**（回退「保存」）。
 
 浏览器：**Chrome → Edge → Playwright Chromium**；登录态：`%LOCALAPPDATA%\qkagent\browser-profile`。
 
-## 修改动作说明（三步）
+## pull / push（本仓库 actions/）
 
-```text
-qkagent.exe action-doc pull --code <sharedId> [--json]
-# 编辑 ...\.quicker\actions\<sharedId>\info.html
-qkagent.exe action-doc push --code <sharedId> [--json]
+```powershell
+# 编辑 actions/<sharedId>/page.html 后：
+qkagent push --code <sharedId> --json
+# pull 仅当 actions/<sharedId>/page.html 尚不存在时
 ```
 
 详见 [action-doc-workflow/SKILL.md](../action-doc-workflow/SKILL.md)。

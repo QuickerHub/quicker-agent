@@ -12,6 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\QuickerAgent.AgentModel\QuickerAgent.AgentModel.csproj" />
     <ProjectReference Include="..\QuickerAgent.Core\QuickerAgent.Core.csproj" />
   </ItemGroup>
 

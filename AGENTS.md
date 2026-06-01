@@ -2,6 +2,8 @@
 
 本仓库 **`qkagent.exe`** 通过 **Playwright** 操作 getquicker.net 上已分享动作的 **网页简介（HTML）**：可 **抓取** 或 **上传/修改**。浏览器优先使用本机 **Chrome / Edge**，登录态保存在本地 **profile 目录**，一般只需登录一次。
 
+**CLI 自描述（优先）**：`qkagent help --json` — 命令、参数、工作流摘要。操作指南：`qkagent guide get --topic workflow --json`。人类可读：[docs/cli-commands.md](docs/cli-commands.md)。
+
 详细用法见 [README.md](README.md)。Cursor Skill：[`.cursor/skills/quicker-agent-exe/SKILL.md`](.cursor/skills/quicker-agent-exe/SKILL.md)、发布：[`.cursor/skills/qkagent-publish-exe/SKILL.md`](.cursor/skills/qkagent-publish-exe/SKILL.md)。
 
 ## 1. 可执行文件在哪
@@ -25,20 +27,22 @@
 
 ## 3. 调用约定
 
+**动作说明在本仓库 `actions/` 编写**（源文件 `page.html`，提交 git；`info.html` 为构建产物）。
+
 - 优先 **`--json`**；退出码 **0 成功，1 失败**。
+- 在 quicker-agent 仓库内**不要**设置 `QKAGENT_ACTIONS_ROOT`（自动识别 `<repo>/actions`）。
 
 ```text
-# 推荐：仓库 actions/<sharedId>/doc.yaml → 构建 info.html → push
-qkagent.exe pull --code <sharedId> [--json]
+# 推荐：编辑仓库 actions/<sharedId>/page.html → push
 # 编辑 actions/<sharedId>/page.html（样式见 _shared/intro.css）
-.\scripts\build-action-docs.ps1 [-Id <sharedId>]
+.\scripts\build-action-docs.ps1 [-Id <sharedId>]   # 可选；push 会自动构建
 qkagent.exe push --code <sharedId> [--json]
 
-# 底层命令（任意路径）
-qkagent.exe get|upload|set (--code … | --dir …) [--json]
+# pull 仅当尚无 page.html、需从线上导入时
+qkagent.exe pull --code <sharedId> [--json]
 ```
 
-本地根目录默认 **`<repo>/actions`**（存在 `actions/README.md` 时），否则 `%USERPROFILE%\.quicker\actions`；可用 **`QKAGENT_ACTIONS_ROOT`** 覆盖。构建说明见 [actions/README.md](actions/README.md)。工作流 Skill：[`.cursor/skills/action-doc-workflow/SKILL.md`](.cursor/skills/action-doc-workflow/SKILL.md)。
+本地根目录：存在 `actions/README.md` 时默认 **`<repo>/actions`**，否则 fallback 到 `%USERPROFILE%\.quicker\actions`。构建说明见 [actions/README.md](actions/README.md)。工作流 Skill：[`.cursor/skills/action-doc-workflow/SKILL.md`](.cursor/skills/action-doc-workflow/SKILL.md)。
 
 ## 4. 架构要点
 

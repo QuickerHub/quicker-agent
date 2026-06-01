@@ -17,7 +17,7 @@ public static class ExitCodes
   public const int Error = 1;
 }
 
-internal static class Program
+internal static partial class Program
 {
   private static readonly UTF8Encoding Utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
 
@@ -30,7 +30,13 @@ internal static class Program
   private static async Task<int> Main(string[] args)
   {
     ConfigureConsoleUtf8();
-    LoadEnvironmentVariables();
+
+    if (TryWriteHelpJson(args))
+    {
+      return ExitCodes.Success;
+    }
+
+    args = NormalizeActionDocShorthand(args);
 
     using var loggerFactory = LoggerFactory.Create(static b =>
     {
@@ -42,12 +48,51 @@ internal static class Program
       });
     });
 
-    var result = Parser.Default.ParseArguments<ActionDocOptions>(args);
+    var result = Parser.Default.ParseArguments<ActionDocOptions, GuideOptions>(args);
     return await result
       .MapResult(
         (ActionDocOptions o) => RunActionDocAsync(o, loggerFactory),
+        (GuideOptions o) => RunGuideAsync(o),
         _ => Task.FromResult(ExitCodes.Error))
       .ConfigureAwait(false);
+  }
+
+  private static bool TryWriteHelpJson(string[] args)
+  {
+    if (args.Length < 2)
+    {
+      return false;
+    }
+
+    if (!string.Equals(args[0], "help", StringComparison.OrdinalIgnoreCase))
+    {
+      return false;
+    }
+
+    if (!args.Any(static a => string.Equals(a, "--json", StringComparison.OrdinalIgnoreCase)))
+    {
+      return false;
+    }
+
+    QkagentCliHelp.WriteJson(global::System.Console.Out);
+    return true;
+  }
+
+  /// <summary>Map pull|push|get|upload|set|apply to action-doc subcommand.</summary>
+  private static string[] NormalizeActionDocShorthand(string[] args)
+  {
+    if (args.Length == 0)
+    {
+      return args;
+    }
+
+    var first = args[0].Trim().ToLowerInvariant();
+    if (first is "pull" or "push" or "apply" or "get" or "upload" or "set")
+    {
+      return ["action-doc", ..args];
+    }
+
+    return args;
   }
 
   private static void ConfigureConsoleUtf8()
@@ -105,6 +150,8 @@ internal static class Program
 
   private static async Task<int> RunActionDocAsync(ActionDocOptions options, ILoggerFactory loggerFactory)
   {
+    LoadEnvironmentVariables();
+
     var verb = (options.Action ?? string.Empty).Trim().ToLowerInvariant();
     return verb switch
     {
