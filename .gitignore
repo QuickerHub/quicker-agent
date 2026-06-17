@@ -19,14 +19,13 @@ publish/agent/
 Thumbs.db
 Desktop.ini
 
+## Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+
 ## IDE
-.vs/
-.idea/
-*.swp
-.playwright-mcp/
-preview/.venv/
-preview/__pycache__/
-action_doc_builder/.venv/
 
 # Built action intros (source: actions/*/page.html + actions/_shared/intro.css)
 actions/**/info.html
