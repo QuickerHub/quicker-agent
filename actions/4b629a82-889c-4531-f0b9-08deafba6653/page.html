@@ -4,7 +4,7 @@
   </p>
 
   <div class="qk-alert qk-alert--warning">
-    <strong>1.1.1 更新重点</strong>：WebView Markdown 提示页已接入 <code>KaTeX</code>，支持 <strong>行内公式</strong> 与 <strong>块级公式</strong> 渲染；同时改为前端主动上报 <code>uiReady</code> 后再注入 Markdown，减少首屏空白或内容注入过早的问题。
+    <strong>1.1.2 更新重点</strong>：子程序依赖同步至 <strong>1.1.2.0</strong>。提示页已接入 <code>KaTeX</code>，支持 <strong>行内公式</strong> 与 <strong>块级公式</strong> 渲染；同时改为前端主动上报 <code>uiReady</code> 后再注入 Markdown，减少首屏空白或内容注入过早的问题。
   </div>
 
   <header class="qk-hero">
@@ -26,7 +26,7 @@
 
   <section class="qk-section">
     <h2>子程序说明</h2>
-    <p>本动作发布 <a href="https://getquicker.net/SubProgram?id=77d01e75-9014-4412-e5e1-08deb4db0cf2">WebViewMarkdownTip</a> 子程序（当前版本 <strong>1.1.1</strong>）。在其它组合动作中可直接调用子程序，或使用本动作的示例流程。</p>
+    <p>本动作发布 <a href="https://getquicker.net/SubProgram?id=77d01e75-9014-4412-e5e1-08deb4db0cf2">WebViewMarkdownTip</a> 子程序（当前版本 <strong>1.1.2</strong>）。在其它组合动作中可直接调用子程序，或使用本动作的示例流程。</p>
     <p>托管入口（C#）：<code>Runner.ShowMarkdownTip(markdown, title, buttonDefinitions);</code></p>
     <p><strong>markdown</strong>：要展示的 Markdown 正文（必填），可直接混写 GFM 与 LaTeX 公式</p>
     <p><strong>title</strong>：窗口标题，省略时为「提示」</p>
@@ -48,7 +48,7 @@
     <ul>
       <li><strong>公式支持</strong>：前端提示页新增 KaTeX 渲染，解决之前只能显示普通 Markdown、无法直接展示公式的问题</li>
       <li><strong>注入时序优化</strong>：由前端在 UI 初始化完成后主动通知宿主，再注入 Markdown 内容，减少首次打开时内容未挂载完成导致的空白/闪烁</li>
-      <li><strong>版本同步</strong>：测试构建版本号已同步到当前打包产物，便于和运行器引用版本保持一致</li>
+      <li><strong>版本同步</strong>：子程序依赖版本已同步至 <strong>1.1.2.0</strong>，与依赖库上传产物保持一致</li>
     </ul>
   </section>
 
