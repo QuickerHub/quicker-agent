@@ -1,0 +1,6 @@
+<Project>
+  <!-- qkagent is a standalone CLI submodule; opt out of workspace CPM and qkref. -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+</Project>

@@ -1,4 +1,4 @@
-# Sync quicker-agent Cursor skills and slash commands to the user directory (~/.cursor).
+# Sync qkagent Cursor skills and slash commands to the user directory (~/.cursor).
 # Source of truth: .cursor/skills/ and .cursor/commands/ in this repository.
 # Safe to re-run; existing targets are removed and replaced (full overwrite).
 
@@ -35,7 +35,7 @@ function Get-QuickerAgentRepoRoot {
         $current = (Get-Item -LiteralPath $parent).FullName.TrimEnd('\')
     }
 
-    throw 'quicker-agent repo root not found (missing QuickerAgent.Console\QuickerAgent.Console.csproj).'
+    throw 'qkagent repo root not found (missing QuickerAgent.Console\QuickerAgent.Console.csproj). Run from tools/qkagent/.'
 }
 
 function Install-CursorUserSkill {

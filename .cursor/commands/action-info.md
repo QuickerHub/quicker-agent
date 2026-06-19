@@ -14,9 +14,10 @@ qkagent help --json
 qkagent guide get --topic workflow --json
 ```
 
-If `qkagent` is missing, from the **quicker-agent** repository run:
+If `qkagent` is missing, from **`tools/qkagent/`** in quicker-workspace run:
 
 ```powershell
+cd tools/qkagent
 pwsh -NoProfile -File ./publish/publish-agent.ps1
 ```
 
@@ -25,11 +26,11 @@ Then open a **new terminal** (PATH update) and retry.
 ## Workflow
 
 1. Resolve **sharedId** (GUID) from user context or Sharedaction URL (`?code=`).
-2. Locate **quicker-agent** repo (directory containing `actions/README.md`). `cd` there when editing sources.
+2. Work in **`tools/qkagent/`** (directory containing `actions/README.md`). `cd` there when editing sources.
 3. **Edit + publish** (default): edit `actions/<sharedId>/page.html` (styles: `actions/_shared/intro.css`), then:
 
    ```powershell
-   qkagent push --code <sharedId> --json
+   qkagent apply --dir actions/<sharedId> --json
    ```
 
 4. **Pull** only when `actions/<sharedId>/page.html` does not exist yet:
@@ -54,11 +55,12 @@ Then open a **new terminal** (PATH update) and retry.
 
 ## Credentials
 
-`QUICKER_EMAIL` and `QUICKER_PASSWORD` in `.env` (quicker-agent repo root or next to `qkagent.exe`). Account must **own** the shared action.
+`QUICKER_EMAIL` and `QUICKER_PASSWORD` in `.env` (`tools/qkagent/` root or next to `qkagent.exe`). Account must **own** the shared action.
 
 ## Do not
 
 - Use `qkrpc` to change getquicker intro HTML (use `qkagent`).
+- Use `push --code` when repo `actions/<sharedId>/` exists (prefer `apply --dir` so `info.html` is built).
 - Upload ad-hoc HTML via `upload --html` when the action folder exists in repo `actions/`.
 - Commit `info.html` (build output); source is `page.html` only.
 

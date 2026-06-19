@@ -23,7 +23,7 @@ function Get-QuickerAgentRepoRoot {
         $current = (Get-Item -LiteralPath $parent).FullName.TrimEnd('\')
     }
 
-    throw "Repository root not found (missing QuickerAgent.Console\QuickerAgent.Console.csproj). Start from quicker-agent or run from publish/."
+    throw "Repository root not found (missing QuickerAgent.Console\QuickerAgent.Console.csproj). Run from tools/qkagent/ or publish/."
 }
 
 $repoRoot = Get-QuickerAgentRepoRoot -StartPath $PSScriptRoot
@@ -43,7 +43,7 @@ else {
 
 $csproj = Join-Path $repoRoot 'QuickerAgent.Console\QuickerAgent.Console.csproj'
 Write-Host "dotnet publish -> $publishDir" -ForegroundColor Yellow
-dotnet publish $csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o $publishDir
+dotnet publish $csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -p:ManagePackageVersionsCentrally=false -o $publishDir
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Publish failed (dotnet exit $LASTEXITCODE)." -ForegroundColor Red
