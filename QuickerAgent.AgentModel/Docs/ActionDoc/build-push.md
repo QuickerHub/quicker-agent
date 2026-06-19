@@ -6,7 +6,7 @@
 
 ## 构建 info.html
 
-`page.html` + `intro.css` → `info.html`（CSS 内联，供 getquicker.net 使用）。
+`page.html` + `intro.css` → `info.html`（CSS 内联，供 getquicker.net 使用）。构建前将 `{{QUICKER_AGENT_SEMVER}}` 等占位符替换为环境变量；未设置时 `action_doc_builder` 回退读取 Bitiful `version.txt`（发版时由 quicker-rpc `Sync-QuickerAgentActionDoc.ps1` 设置 `QUICKER_AGENT_SEMVER` 或显式 `-Version`）。
 
 ```powershell
 .\scripts\build-action-docs.ps1              # 全部

@@ -1,10 +1,10 @@
-# quicker-agent — 给 AI Agent 的快速说明
+# qkagent — 给 AI Agent 的快速说明
 
 本仓库 **`qkagent.exe`** 通过 **Playwright** 操作 getquicker.net 上已分享动作的 **网页简介（HTML）**：可 **抓取** 或 **上传/修改**。浏览器优先使用本机 **Chrome / Edge**，登录态保存在本地 **profile 目录**，一般只需登录一次。
 
 **CLI 自描述（优先）**：`qkagent help --json` — 命令、参数、工作流摘要。操作指南：`qkagent guide get --topic workflow --json`。人类可读：[docs/cli-commands.md](docs/cli-commands.md)。
 
-详细用法见 [README.md](README.md)。Cursor Skill：[`.cursor/skills/quicker-agent-exe/SKILL.md`](.cursor/skills/quicker-agent-exe/SKILL.md)、发布：[`.cursor/skills/qkagent-publish-exe/SKILL.md`](.cursor/skills/qkagent-publish-exe/SKILL.md)。
+详细用法见 [README.md](README.md)。Cursor Skill：动作页说明 [`.cursor/skills/action-doc-workflow/SKILL.md`](.cursor/skills/action-doc-workflow/SKILL.md)、CLI [`.cursor/skills/quicker-agent-exe/SKILL.md`](.cursor/skills/quicker-agent-exe/SKILL.md)、发布 [`.cursor/skills/qkagent-publish-exe/SKILL.md`](.cursor/skills/qkagent-publish-exe/SKILL.md)。
 
 ## 1. 可执行文件在哪
 
@@ -30,7 +30,7 @@
 **动作说明在本仓库 `actions/` 编写**（源文件 `page.html`，提交 git；`info.html` 为构建产物）。
 
 - 优先 **`--json`**；退出码 **0 成功，1 失败**。
-- 在 quicker-agent 仓库内**不要**设置 `QKAGENT_ACTIONS_ROOT`（自动识别 `<repo>/actions`）。
+- 在 `tools/qkagent/` 内**不要**设置 `QKAGENT_ACTIONS_ROOT`（自动识别 `<repo>/actions`）。
 
 ```text
 # 推荐：编辑 actions/<sharedId>/page.html → apply（上传 info.html）
@@ -70,6 +70,16 @@ qkagent.exe pull --code <sharedId> [--json]
 - 勿在日志中粘贴完整 `.env`。
 - 简介编辑控件仅作者可见；页面文案变更时改 `GetQuickerActionDocPage.cs`。
 
-## 7. 开发者
+## 7. Cursor 用户 skill / 斜杠命令
+
+源文件在 `.cursor/skills/` 与 `.cursor/commands/`。同步到 `%USERPROFILE%\.cursor\`（可重复覆盖）：
+
+```powershell
+pwsh -NoProfile -File ./scripts/install-cursor-user.ps1
+```
+
+`publish/publish-agent.ps1` 发布 exe 后会自动执行上述安装。Chat 输入 **`/action-info`** 快速操作 getquicker 动作页说明。
+
+## 8. 开发者
 
 `dotnet build QuickerAgent.slnx`

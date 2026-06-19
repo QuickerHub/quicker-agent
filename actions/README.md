@@ -1,6 +1,6 @@
 # Action intro documents (getquicker.net)
 
-编辑 **`page.html`** + 共享 **`_shared/intro.css`**，构建生成 **`info.html`**（已 gitignore，不上传仓库），`qkagent push` 上传编译结果。
+编辑 **`page.html`** + 共享 **`_shared/intro.css`**，构建生成 **`info.html`**（已 gitignore，不上传仓库），`qkagent apply --dir` 上传编译结果。
 
 ## 目录
 
@@ -17,7 +17,7 @@ actions/
 
 ```powershell
 # 1. 编辑 actions/<id>/page.html
-# 2. 构建（push 前也会自动执行）
+# 2. 构建（apply 前也会自动执行）
 .\scripts\build-action-docs.ps1
 # 或单个：.\scripts\build-action-docs.ps1 -Id <guid>
 # 3. 发布（上传 info.html，含内联样式）
@@ -33,6 +33,10 @@ qkagent apply --dir actions/<shared-guid> --json
 | **Detail HTML** | Summernote 动作说明 | 本目录 `page.html` → `info.html` → **`qkagent apply --dir`** |
 
 填备注会在动作页「简介」顶部重复显示一段 markdown，且与 Detail 重复；qkagent 只维护 Detail。
+
+## QuickerAgent 插件入口（aa5917ad）
+
+Bitiful 安装包链接使用 `{{QUICKER_AGENT_SEMVER}}` 占位符；**quicker-rpc 发布**时运行 `publish/Sync-QuickerAgentActionDoc.ps1` 自动替换（默认读 Bitiful `version.txt`；`qkagent apply` 构建时亦会回退读取）。见 quicker-rpc `.cursor/skills/quicker-rpc-publish/SKILL.md`。
 
 ## page.html 写法
 

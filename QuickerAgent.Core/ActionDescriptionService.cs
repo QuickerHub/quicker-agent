@@ -430,12 +430,20 @@ public sealed class ActionDescriptionService
   private async Task<string?> ReadEditorHtmlAsync(IPage page, CancellationToken cancellationToken)
   {
     _ = cancellationToken;
+
+    var fromSummernote = await page
+      .EvaluateAsync<string?>(ActionDescriptionEditorInterop.ReadSummernoteCodeScript)
+      .ConfigureAwait(false);
+    if (!string.IsNullOrWhiteSpace(fromSummernote))
+    {
+      _logger.LogInformation("Read HTML from Summernote API ({Length} chars).", fromSummernote.Length);
+      return fromSummernote;
+    }
+
     if (!await EnsureSourceCodeViewAsync(page).ConfigureAwait(false))
     {
-      _logger.LogWarning("Source view not available; falling back to Summernote API.");
-      return await page
-        .EvaluateAsync<string?>(ActionDescriptionEditorInterop.ReadSummernoteCodeScript)
-        .ConfigureAwait(false);
+      _logger.LogWarning("Summernote API empty and source view not available.");
+      return null;
     }
 
     var textarea = await FindSourceTextareaAsync(page).ConfigureAwait(false);
@@ -447,13 +455,11 @@ public sealed class ActionDescriptionService
     var html = await textarea.InputValueAsync().ConfigureAwait(false);
     if (!string.IsNullOrEmpty(html))
     {
-      _logger.LogInformation("Read HTML from source textarea.");
+      _logger.LogInformation("Read HTML from source textarea fallback ({Length} chars).", html.Length);
       return html;
     }
 
-    return await page
-      .EvaluateAsync<string?>(ActionDescriptionEditorInterop.ReadSummernoteCodeScript)
-      .ConfigureAwait(false);
+    return null;
   }
 
   private async Task<WriteEditorOutcome> WriteEditorHtmlAsync(

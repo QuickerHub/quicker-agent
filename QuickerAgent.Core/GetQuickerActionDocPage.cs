@@ -46,6 +46,23 @@ public static class GetQuickerActionDocPage
   /// <summary>Accessible name fallback for submit input.</summary>
   public const string SubmitButtonName = "更新动作信息";
 
+  /// <summary>Summernote toolbar button that opens the image upload dialog.</summary>
+  public const string ImageToolbarButtonSelector = "button[aria-label='图片'], button[data-original-title='图片']";
+
+  /// <summary>File input inside Summernote image dialog.</summary>
+  public const string ImageFileInputSelector = "input[type=file][accept*='image']";
+
+  public const string SiteUploadPathTemplate = "/site/upload?type=kb/sharedaction/{code}";
+
+  public static string ExpandSiteUploadUrl(string sharedActionCode)
+  {
+    ArgumentException.ThrowIfNullOrWhiteSpace(sharedActionCode);
+    return "https://getquicker.net"
+           + SiteUploadPathTemplate
+             .Replace("{code}", sharedActionCode, StringComparison.OrdinalIgnoreCase)
+             .Replace("{0}", sharedActionCode, StringComparison.Ordinal);
+  }
+
   public static string ExpandEditPageUrl(string sharedActionCode)
   {
     ArgumentException.ThrowIfNullOrWhiteSpace(sharedActionCode);

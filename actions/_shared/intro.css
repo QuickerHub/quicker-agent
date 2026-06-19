@@ -266,6 +266,56 @@
   background: var(--bg-hover, color-mix(in srgb, currentColor 8%, transparent));
 }
 
+/* GitHub star promo: vertical stack for narrow action-detail column */
+.qk-banner--star {
+  padding: 14px 16px;
+}
+
+.qk-banner--star .qk-banner__label {
+  margin-bottom: 6px;
+}
+
+.qk-banner--star .qk-banner__repo {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--link-color, var(--bs-link-color, #286da8));
+  text-decoration: none;
+  word-break: break-word;
+}
+
+.qk-banner--star .qk-banner__repo:hover {
+  text-decoration: underline;
+}
+
+.qk-banner--star .qk-banner__desc {
+  margin: 8px 0 0;
+  line-height: 1.55;
+}
+
+.qk-banner--star .qk-banner__desc a {
+  color: var(--link-color, var(--bs-link-color, #286da8));
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.qk-banner--star .qk-banner__desc a:hover {
+  text-decoration: underline;
+}
+
+.qk-banner--star .qk-banner__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.qk-banner--star .qk-banner__cta--ghost {
+  background: transparent;
+  font-weight: 500;
+}
+
 .qk-callout {
   display: inline-block;
   margin-top: 12px;

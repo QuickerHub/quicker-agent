@@ -1,0 +1,85 @@
+<div class="qk-doc">
+  <div class="qk-alert qk-alert--warning">
+    <strong>需要管理员权限：</strong>本动作会以管理员身份运行 PowerShell，修改 WinNAT 服务与 TCP 端口保留设置。请在 UAC 提示中点击「是」；若你使用公司管控电脑，请先确认策略允许。
+  </div>
+
+  <header class="qk-hero">
+    <h1>修复 Codex 登录端口</h1>
+    <p class="qk-summary">
+      一键修复 OpenAI <strong>Codex CLI</strong> 登录失败：<code>failed to start login server … (os error 10013)</code>。
+      动作会检测 <strong>1455</strong> 端口占用与 Windows 排除端口范围，自动重启 WinNAT 并永久保留该端口，修复完成后重新执行 <code>codex login</code> 即可。
+    </p>
+  </header>
+
+  <section class="qk-section">
+    <h2>适用场景</h2>
+    <ul>
+      <li>终端执行 <code>codex login</code> 时报错 10013（访问套接字权限不允许）</li>
+      <li>登录流程无法在本机 <code>127.0.0.1:1455</code> 启动 OAuth 回调服务</li>
+      <li>已启用 Hyper-V、WSL、Docker Desktop 等，系统动态保留了大量 TCP 端口</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>使用方法</h2>
+    <ol>
+      <li>将本动作安装到 Quicker 面板（建议放在常用页，便于再次修复）</li>
+      <li><strong>点击运行动作</strong>，在 UAC 提示中选择「是」</li>
+      <li>阅读控制台输出：若 1455 被其它进程占用，可按提示选择是否结束占用进程</li>
+      <li>看到「修复完成」后，在终端重新执行 <code>codex login</code></li>
+    </ol>
+    <p class="qk-footnote">动作运行时会弹出 PowerShell 窗口并等待你按回车关闭；请勿提前关闭窗口，以免错过提示。</p>
+  </section>
+
+  <section class="qk-section">
+    <h2>原理说明</h2>
+    <p>Codex CLI 登录时会在本机 <code>127.0.0.1:1455</code> 启动临时 HTTP 服务，用于接收浏览器 OAuth 回调。</p>
+    <p>在 Windows 上，Hyper-V / WinNAT 可能动态保留一段「排除端口范围」，1455 常落入其中，导致应用无法绑定该端口并抛出 <strong>os error 10013</strong>。</p>
+    <p>本动作会依次执行：</p>
+    <ol>
+      <li>检查 1455 是否被进程占用</li>
+      <li>解析 <code>netsh interface ipv4 show excludedportrange protocol=tcp</code> 输出</li>
+      <li>若端口落在动态保留范围内：停止 WinNAT → 永久保留 1455 → 重新启动 WinNAT</li>
+      <li>再次验证排除范围，输出成功或失败结论</li>
+    </ol>
+    <p class="qk-footnote">永久保留后，重启电脑 WinNAT 也不会再抢占 1455。</p>
+  </section>
+
+  <section class="qk-section">
+    <h2>环境要求</h2>
+    <ul>
+      <li>Windows 10 及以上</li>
+      <li>已安装 <a href="https://developers.openai.com/codex/cli">Codex CLI</a>，且需要完成账号登录</li>
+      <li>当前 Windows 用户具备<strong>本地管理员</strong>权限（用于 UAC 提权）</li>
+      <li>Quicker 支持「运行脚本 · 以管理员身份运行」步骤</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>常见问题</h2>
+    <ul class="qk-faq">
+      <li><strong>修复后仍无法登录？</strong><br>检查防火墙或安全软件是否拦截本地回环端口；或改用设备码登录：<code>codex login --device-code</code>。</li>
+      <li><strong>提示端口仍在排除范围内？</strong><br>建议<strong>重启电脑</strong>后再运行本动作一次；若仍失败，请把控制台完整输出贴到讨论区。</li>
+      <li><strong>会不会影响 Hyper-V / Docker？</strong><br>动作仅重启 WinNAT 并单独保留 1455，一般不影响虚拟化功能；若环境特殊，请在维护窗口执行。</li>
+      <li><strong>需要重复运行吗？</strong><br>成功保留 1455 后通常无需再次修复；仅在系统大幅变更或端口再次被占用时可重跑。</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>手动排查（参考）</h2>
+    <p>若你想自行确认问题，可在<strong>管理员 PowerShell</strong> 中执行：</p>
+    <ul>
+      <li><code>netsh interface ipv4 show excludedportrange protocol=tcp</code> — 查看 1455 是否落在某段范围内</li>
+      <li><code>Get-NetTCPConnection -LocalPort 1455</code> — 查看是否有进程占用</li>
+    </ul>
+    <p class="qk-footnote">本动作已封装上述逻辑，日常使用直接点击运行即可。</p>
+  </section>
+
+  <section class="qk-section">
+    <h2>相关链接</h2>
+    <div class="qk-links">
+      <a class="qk-chip" href="https://developers.openai.com/codex/cli">Codex CLI 文档</a>
+      <a class="qk-chip" href="https://getquicker.net/Sharedaction?code=9e868e04-b88d-4997-bd45-08dec6cc8b75#tab=discuss">讨论区</a>
+    </div>
+  </section>
+</div>

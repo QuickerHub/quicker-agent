@@ -24,8 +24,14 @@ __pycache__/
 *.py[cod]
 *$py.class
 .venv/
+preview/.venv/
+action_doc_builder/.venv/
 
 ## IDE
+.vs/
+.idea/
+*.swp
+.playwright-mcp/
 
 # Built action intros (source: actions/*/page.html + actions/_shared/intro.css)
 actions/**/info.html
