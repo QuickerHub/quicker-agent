@@ -1,0 +1,143 @@
+<div class="qk-doc">
+  <div class="qk-alert qk-alert--warning">
+    <strong>测试通道：</strong>本动作为 IntelliTools <strong>0.8.x</strong> 的<strong>预览/内测</strong>分发，修订较频繁，偶有问题属正常。日常主力使用请安装
+    <a href="https://getquicker.net/Sharedaction?code=9ec53d43-5539-4571-6886-08d8c752bfcb">稳定版「剪贴板」</a>。
+    若关注 .NET 10 重构路线，可另看
+    <a href="https://getquicker.net/Sharedaction?code=df6cc8fc-1a67-4576-fcb0-08deace01986">剪贴板 n10</a>。
+    <strong>请勿与稳定版或 n10 同时常驻</strong>，以免后台服务冲突。
+  </div>
+
+  <p class="qk-feedback">
+    交流反馈：剪贴板动作 QQ 群 <span class="qk-qq">824753837</span>
+  </p>
+
+  <header class="qk-hero">
+    <h1>剪贴板 <span class="qk-accent">pre</span></h1>
+    <p class="qk-summary">
+      基于 IntelliTools / BetterClip 的<strong>增强预览通道</strong>：在稳定版核心能力之上，优先验证依赖精简、主题隔离、剪贴板窗口管理与热更新等改进。安装后触发即可唤出剪贴板面板；依赖包会在首次运行时自动下载更新。
+    </p>
+  </header>
+
+  <section class="qk-section">
+    <h2>预览通道特点</h2>
+    <ul>
+      <li><strong>先行修复</strong>：legacy 主开发分支的修复与优化会先在本通道发布，稳定后再合入正式版</li>
+      <li><strong>依赖更轻</strong>：插件侧逐步收敛 Quicker 桥接与 Win32 共享库，单 DLL 体积持续优化</li>
+      <li><strong>主题隔离</strong>：HandyControl 主题按窗口附加，降低 Quicker 全局样式对剪贴板界面的干扰</li>
+      <li><strong>热更新对齐</strong>：与 <code>CeaCore_Run_Legacy</code> 混合模式 v2 及四段 revision 构建链一致，便于快速迭代</li>
+      <li><strong>版本标识</strong>：面板标题栏显示 <strong>pre</strong> 角标，便于与稳定版区分</li>
+    </ul>
+    <p class="qk-footnote">具体变更见本页下方「最近更新」；遇回归可在 QQ 群反馈并暂时切回稳定版。</p>
+  </section>
+
+  <section class="qk-section">
+    <h2>核心能力</h2>
+    <ul>
+      <li><strong>全面记录</strong>：文本、文件、图片等剪贴板内容自动留存，减少窗口来回切换</li>
+      <li><strong>智能粘贴</strong>：针对不同软件优化粘贴行为，支持多选合并粘贴</li>
+      <li><strong>连续粘贴</strong>：按序粘贴多条记录，适合批量填表、分段输出</li>
+      <li><strong>收藏体系</strong>：常用片段、网址与剪贴板条目可收藏，一键取用</li>
+      <li><strong>高度自定义</strong>：背景、字体、行为等可在设置中按习惯调整</li>
+      <li><strong>响应速度</strong>：持续优化启动与唤出路径，pre 通道优先验证窗口定位与 pin 逻辑</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>右键菜单</h2>
+    <p>在 Quicker 面板中<strong>右键本动作按钮</strong>，可使用以下快捷入口（无需打开剪贴板面板）：</p>
+    <table>
+      <thead>
+        <tr>
+          <th>菜单项</th>
+          <th>说明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>设置</td>
+          <td>打开剪贴板设置界面</td>
+        </tr>
+        <tr>
+          <td>打开数据文件夹</td>
+          <td>查看本地数据与配置目录</td>
+        </tr>
+        <tr>
+          <td>暂停或开始</td>
+          <td>临时停止/恢复剪贴板监听</td>
+        </tr>
+        <tr>
+          <td>连续粘贴</td>
+          <td>进入连续粘贴模式</td>
+        </tr>
+        <tr>
+          <td>使用说明</td>
+          <td>查看内置帮助</td>
+        </tr>
+        <tr>
+          <td>收藏夹</td>
+          <td>打开收藏夹、网址收藏或剪贴板收藏</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="qk-section">
+    <h2>安装与要求</h2>
+    <ul>
+      <li>最低 Quicker 版本：<strong>1.39.0</strong>，建议使用 <strong>1.45.0</strong> 及以上</li>
+      <li>运行环境：<a href="https://dotnet.microsoft.com/download/dotnet-framework/net472">.NET Framework 4.7.2</a> 或更高（Windows 10 及以上通常已内置）</li>
+      <li>首次运行会自动下载 <code>cea.clip</code> 依赖包；请保持网络畅通</li>
+      <li>建议加入<strong>自动运行</strong>，以便开机后后台持续记录剪贴板</li>
+      <li>与<strong>稳定版</strong>或<strong>n10 测试版</strong>二选一安装，避免多个剪贴板服务同时运行</li>
+    </ul>
+    <div class="qk-callout">
+      <a href="quicker:settings:AutoRunActions">打开「自动运行」设置</a>
+    </div>
+  </section>
+
+  <section class="qk-section">
+    <h2>使用提示</h2>
+    <ul>
+      <li>再次触发动作可快速关闭剪贴板界面（适合绑定快捷键）</li>
+      <li>选择条目时按住 <kbd>Ctrl</kbd> / <kbd>Shift</kbd> 可多选并合并粘贴</li>
+      <li>需要暂停监听时，用右键菜单「暂停或开始」，避免临时大量复制污染历史</li>
+      <li>pre 通道更新较快；若某版影响使用，可卸载后改装稳定版，数据目录一般可保留</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>版本路线</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>通道</th>
+          <th>适用场景</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><a href="https://getquicker.net/Sharedaction?code=9ec53d43-5539-4571-6886-08d8c752bfcb">稳定版「剪贴板」</a></td>
+          <td>日常主力，稳定优先</td>
+        </tr>
+        <tr>
+          <td><strong>剪贴板 pre</strong>（本页）</td>
+          <td>legacy 0.8.x 增强预览，愿尝鲜、帮验证修复</td>
+        </tr>
+        <tr>
+          <td><a href="https://getquicker.net/Sharedaction?code=df6cc8fc-1a67-4576-fcb0-08deace01986">剪贴板 n10</a></td>
+          <td>.NET 10 / ClipHost 重构预览，技术路线不同</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="qk-section">
+    <h2>扩展资源</h2>
+    <div class="qk-links">
+      <a class="qk-chip" href="https://www.wolai.com/8eizYvWmhibh2dChMY72aW">详细使用文档</a>
+      <a class="qk-chip" href="https://www.wolai.com/d5FMJuzYAQdTvUVBenUSPU">更多功能介绍</a>
+      <a class="qk-chip" href="https://getquicker.net/Share/ActionLists/List?id=8b738f39-1d88-4e63-af27-08da0d4ec4b7">Cea 系列扩展动作</a>
+      <a class="qk-chip" href="https://getquicker.net/Sharedaction?code=9ec53d43-5539-4571-6886-08d8c752bfcb">稳定版「剪贴板」</a>
+    </div>
+  </section>
+</div>

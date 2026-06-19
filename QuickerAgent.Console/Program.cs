@@ -48,11 +48,12 @@ internal static partial class Program
       });
     });
 
-    var result = Parser.Default.ParseArguments<ActionDocOptions, GuideOptions>(args);
+    var result = Parser.Default.ParseArguments<ActionDocOptions, GuideOptions, QaOptions>(args);
     return await result
       .MapResult(
         (ActionDocOptions o) => RunActionDocAsync(o, loggerFactory),
         (GuideOptions o) => RunGuideAsync(o),
+        (QaOptions o) => RunQaAsync(o, loggerFactory),
         _ => Task.FromResult(ExitCodes.Error))
       .ConfigureAwait(false);
   }
@@ -159,6 +160,7 @@ internal static partial class Program
       "pull" => await RunActionDocPullAsync(options, loggerFactory).ConfigureAwait(false),
       "upload" or "set" => await RunActionDocUploadAsync(options, loggerFactory).ConfigureAwait(false),
       "push" or "apply" => await RunActionDocPushAsync(options, loggerFactory).ConfigureAwait(false),
+      "image" => await RunActionDocImageAsync(options, loggerFactory).ConfigureAwait(false),
       _ => await UnknownVerbAsync(options).ConfigureAwait(false),
     };
   }
@@ -168,7 +170,7 @@ internal static partial class Program
     await EmitErrorAsync(
         options.Json,
         "UNKNOWN_ACTION_DOC_VERB",
-        "Use: pull|push|apply|get|upload|set (--code <sharedId> | --dir <folder>) [--json]")
+        "Use: pull|push|apply|image|get|upload|set (--code <sharedId> | --dir <folder>) [--json]")
       .ConfigureAwait(false);
     return ExitCodes.Error;
   }
@@ -203,7 +205,8 @@ internal static partial class Program
 
     var sharedId = options.Code.Trim();
     var actionDir = store.GetActionDirectory(sharedId);
-    return (sharedId, store.GetInfoHtmlPath(sharedId), actionDir);
+    var pagePath = store.GetPageHtmlPath(sharedId);
+    return (sharedId, pagePath, actionDir);
   }
 
   private static (string SharedId, string HtmlPath) ResolveTargets(
@@ -311,6 +314,10 @@ internal static partial class Program
       Directory.CreateDirectory(actionDir);
       await WriteHtmlFileAsync(outputPath, fetch.Html).ConfigureAwait(false);
       await store.WriteMetaAsync(sharedId, CancellationToken.None).ConfigureAwait(false);
+      if (File.Exists(outputPath))
+      {
+        ActionDocBuildRunner.TryBuild(store.ActionsRoot, sharedId, out _);
+      }
     }
     catch (Exception ex)
     {
@@ -327,7 +334,8 @@ internal static partial class Program
           action = "pull",
           sharedId,
           actionDirectory = actionDir,
-          infoHtmlPath = outputPath,
+          pageHtmlPath = outputPath,
+          infoHtmlPath = store.GetInfoHtmlPath(sharedId),
           actionsRoot = store.ActionsRoot,
           htmlLength = fetch.Html.Length,
           headless = fetch.AgentSettings.Headless,
@@ -338,7 +346,7 @@ internal static partial class Program
     else
     {
       global::System.Console.WriteLine(
-        $"Pulled description for {sharedId} to {outputPath}. Edit the file, then: action-doc push --code {sharedId}");
+        $"Pulled description for {sharedId} to {outputPath}. Edit page.html, then: action-doc push --code {sharedId}");
     }
 
     return ExitCodes.Success;
@@ -604,7 +612,7 @@ internal static partial class Program
 [Verb("action-doc", HelpText = "Get or update HTML intro text for a shared action on getquicker.net.")]
 public sealed class ActionDocOptions
 {
-  [Value(0, MetaName = "command", Required = true, HelpText = "pull | push | apply | get | upload | set")]
+  [Value(0, MetaName = "command", Required = true, HelpText = "pull | push | apply | image | get | upload | set")]
   public string? Action { get; set; }
 
   [Option("code", HelpText = "Shared action id (GUID) when not using --dir.")]
@@ -612,6 +620,18 @@ public sealed class ActionDocOptions
 
   [Option("html", HelpText = "Path to HTML file for upload/set when not using --dir.")]
   public string? Html { get; set; }
+
+  [Option("file", HelpText = "Local image path for action-doc image.")]
+  public string? File { get; set; }
+
+  [Option("index", Default = 0, HelpText = "Zero-based <img> index to replace in page.html (default: 0).")]
+  public int ImageIndex { get; set; }
+
+  [Option("alt", HelpText = "Replace <img> whose alt attribute contains this text.")]
+  public string? Alt { get; set; }
+
+  [Option("push", HelpText = "After action-doc image, build and push page.html to getquicker.net.")]
+  public bool Push { get; set; }
 
   [Option("dir", HelpText = "Folder with manifest YAML + description.html.")]
   public string? Dir { get; set; }

@@ -24,6 +24,10 @@ actions/
 qkagent push --code <shared-guid>
 ```
 
+## QuickerAgent 插件入口（aa5917ad）
+
+Bitiful 安装包链接使用 `{{QUICKER_AGENT_SEMVER}}` 占位符；**quicker-rpc 发布**时运行 `publish/Sync-QuickerAgentActionDoc.ps1` 自动替换（默认读 Bitiful `version.txt`；`qkagent push` 构建时亦会回退读取）。见 quicker-rpc `.cursor/skills/quicker-rpc-publish/SKILL.md`。
+
 ## page.html 写法
 
 根节点 `class="qk-doc"`，其余用约定 class，**不要写 inline style**。

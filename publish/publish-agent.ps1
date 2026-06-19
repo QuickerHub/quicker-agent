@@ -133,4 +133,20 @@ else {
 Write-Host ""
 Write-Host "When PATH includes the publish folder (open a new terminal): qkagent.exe action-doc upload --dir ..." -ForegroundColor Cyan
 
+Write-Host ""
+Write-Host "Installing Cursor user skills and /action-info command..." -ForegroundColor Yellow
+$installCursorScript = Join-Path $repoRoot 'scripts\install-cursor-user.ps1'
+if (Test-Path -LiteralPath $installCursorScript) {
+    try {
+        & $installCursorScript
+    }
+    catch {
+        Write-Host "Cursor user install failed: $($_.Exception.Message)" -ForegroundColor Yellow
+        Write-Host "Run manually: pwsh -NoProfile -File ./scripts/install-cursor-user.ps1" -ForegroundColor Cyan
+    }
+}
+else {
+    Write-Host "Skip Cursor install (missing scripts/install-cursor-user.ps1)." -ForegroundColor Yellow
+}
+
 exit 0

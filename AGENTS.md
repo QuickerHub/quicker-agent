@@ -4,7 +4,7 @@
 
 **CLI 自描述（优先）**：`qkagent help --json` — 命令、参数、工作流摘要。操作指南：`qkagent guide get --topic workflow --json`。人类可读：[docs/cli-commands.md](docs/cli-commands.md)。
 
-详细用法见 [README.md](README.md)。Cursor Skill：[`.cursor/skills/quicker-agent-exe/SKILL.md`](.cursor/skills/quicker-agent-exe/SKILL.md)、发布：[`.cursor/skills/qkagent-publish-exe/SKILL.md`](.cursor/skills/qkagent-publish-exe/SKILL.md)。
+详细用法见 [README.md](README.md)。Cursor Skill：动作页说明 [`.cursor/skills/action-doc-workflow/SKILL.md`](.cursor/skills/action-doc-workflow/SKILL.md)、CLI [`.cursor/skills/quicker-agent-exe/SKILL.md`](.cursor/skills/quicker-agent-exe/SKILL.md)、发布 [`.cursor/skills/qkagent-publish-exe/SKILL.md`](.cursor/skills/qkagent-publish-exe/SKILL.md)。
 
 ## 1. 可执行文件在哪
 
@@ -69,6 +69,16 @@ qkagent.exe pull --code <sharedId> [--json]
 - 勿在日志中粘贴完整 `.env`。
 - 简介编辑控件仅作者可见；页面文案变更时改 `GetQuickerActionDocPage.cs`。
 
-## 7. 开发者
+## 7. Cursor 用户 skill / 斜杠命令
+
+源文件在 `.cursor/skills/` 与 `.cursor/commands/`。同步到 `%USERPROFILE%\.cursor\`（可重复覆盖）：
+
+```powershell
+pwsh -NoProfile -File ./scripts/install-cursor-user.ps1
+```
+
+`publish/publish-agent.ps1` 发布 exe 后会自动执行上述安装。Chat 输入 **`/action-info`** 快速操作 getquicker 动作页说明。
+
+## 8. 开发者
 
 `dotnet build QuickerAgent.slnx`

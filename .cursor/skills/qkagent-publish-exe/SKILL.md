@@ -39,10 +39,17 @@ Wait for exit code **0**. On failure, read script output, fix the issue, then re
 - Copies `env.example` to `publish/agent/`
 - Runs `pwsh -File playwright.ps1 install chromium` when `playwright.ps1` exists in the publish folder, else tries `dotnet exec Microsoft.Playwright.CLI.dll` when that DLL exists
 - Appends the resolved `publish/agent` directory to the **user** `PATH` if not already there (user may need a new terminal)
+- Runs `scripts/install-cursor-user.ps1` to sync `.cursor/skills/` and `/action-info` into `%USERPROFILE%\.cursor\` (overwrite)
 
 ## After success
 
 Confirm briefly: success and output path `publish/agent/qkagent.exe` (note: restart terminal if `PATH` was updated).
+
+Cursor-only refresh (no dotnet publish):
+
+```powershell
+pwsh -NoProfile -File ./scripts/install-cursor-user.ps1
+```
 
 ## Version bumps
 
