@@ -20,9 +20,19 @@ actions/
 # 2. 构建（push 前也会自动执行）
 .\scripts\build-action-docs.ps1
 # 或单个：.\scripts\build-action-docs.ps1 -Id <guid>
-# 3. 发布
-qkagent push --code <shared-guid>
+# 3. 发布（上传 info.html，含内联样式）
+qkagent apply --dir actions/<shared-guid> --json
+# 勿用 push --code（会上传无样式的 page.html）
 ```
+
+## getquicker 两个简介字段（勿混淆）
+
+| 字段 | 编辑页标签 | 维护方式 |
+|------|------------|----------|
+| **备注 Note** | 「备注（已过期，新动作请勿填写）」 | **禁止填写** — `qkrpc action publish` 勿传 `--share-note` / `note` |
+| **Detail HTML** | Summernote 动作说明 | 本目录 `page.html` → `info.html` → **`qkagent apply --dir`** |
+
+填备注会在动作页「简介」顶部重复显示一段 markdown，且与 Detail 重复；qkagent 只维护 Detail。
 
 ## page.html 写法
 

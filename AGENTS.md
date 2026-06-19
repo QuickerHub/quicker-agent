@@ -33,14 +33,15 @@
 - 在 quicker-agent 仓库内**不要**设置 `QKAGENT_ACTIONS_ROOT`（自动识别 `<repo>/actions`）。
 
 ```text
-# 推荐：编辑仓库 actions/<sharedId>/page.html → push
-# 编辑 actions/<sharedId>/page.html（样式见 _shared/intro.css）
-.\scripts\build-action-docs.ps1 [-Id <sharedId>]   # 可选；push 会自动构建
-qkagent.exe push --code <sharedId> [--json]
+# 推荐：编辑 actions/<sharedId>/page.html → apply（上传 info.html）
+.\scripts\build-action-docs.ps1 [-Id <sharedId>]   # 可选；apply 前会自动构建
+qkagent.exe apply --dir actions/<sharedId> [--json]
 
 # pull 仅当尚无 page.html、需从线上导入时
 qkagent.exe pull --code <sharedId> [--json]
 ```
+
+**禁止**在 `qkrpc action publish` 使用 `--share-note` / `note` — getquicker「备注（已过期）」与 Detail HTML 分离；填备注会在动作页顶部重复显示。动作说明只维护 `page.html` → `info.html`。
 
 本地根目录：存在 `actions/README.md` 时默认 **`<repo>/actions`**，否则 fallback 到 `%USERPROFILE%\.quicker\actions`。构建说明见 [actions/README.md](actions/README.md)。工作流 Skill：[`.cursor/skills/action-doc-workflow/SKILL.md`](.cursor/skills/action-doc-workflow/SKILL.md)。
 

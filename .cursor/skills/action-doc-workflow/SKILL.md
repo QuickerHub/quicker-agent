@@ -22,13 +22,20 @@ disable-model-invocation: false
 ## 流程
 
 ```powershell
-# 编辑 actions/<shared-guid>/page.html（参考 actions/1abfcdc2-…/page.html）
-.\scripts\build-action-docs.ps1 -Id "<shared-guid>"   # 可选；push 会自动构建
-qkagent push --code "<shared-guid>" --json
+# 编辑 actions/<shared-guid>/page.html（参考 actions/fe33cf74-…/page.html）
+.\scripts\build-action-docs.ps1 -Id "<shared-guid>"   # 可选；apply 前会自动构建
+qkagent apply --dir "actions/<shared-guid>" --json
 
-# 仅当尚无 page.html 时：
+# pull 仅当尚无 page.html 时：
 # qkagent pull --code "<shared-guid>" --json
 ```
+
+## 与 qkrpc 分享动作配合
+
+1. **`qkrpc action publish`** — 只传 title、description、tags、changelog；**禁止** `note` / `--share-note`（废弃备注字段）。
+2. **`qkagent apply --dir`** — 上传 Detail HTML（`info.html`）。
+
+首次公开分享若 preflight 报 `MISSING_DETAIL`：用 `--html-file` 指向已构建的 `info.html`，或先 publish 再 `apply --dir`。
 
 ## 样式 class 速查
 
