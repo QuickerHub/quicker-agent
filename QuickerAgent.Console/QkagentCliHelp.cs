@@ -112,10 +112,10 @@ internal static class QkagentCliHelp
         Cmd("push", "Shorthand for action-doc push.", "qkagent push --code <sharedId> [--json]",
           opts: ActionDocPullPushOpts()),
 
-        Cmd("qa post", "Create a new topic on getquicker.net/QA.", "qkagent qa post --title <text> --category <id|name> (--content <html> | --content-file <path>) [--keywords <text>] [--json]",
+        Cmd("qa post", "Create a new topic on getquicker.net/QA.", "qkagent qa post (--title <text> | --title-file <path>) --category <id|name> (--content <html> | --content-file <path>) [--keywords <text>] [--json]",
           opts: QaPostOpts()),
 
-        Cmd("qa edit", "Edit an existing QA topic (author only).", "qkagent qa edit --id <questionId|url> [--title <text>] [--category <id|name>] (--content <html> | --content-file <path>) [--keywords <text>] [--json]",
+        Cmd("qa edit", "Edit an existing QA topic (author only).", "qkagent qa edit --id <questionId|url> [--title <text> | --title-file <path>] [--category <id|name>] [--content <html> | --content-file <path>] [--keywords <text>] [--json]",
           opts: QaEditOpts()),
       },
     };

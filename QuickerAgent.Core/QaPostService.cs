@@ -401,22 +401,25 @@ public sealed class QaPostService
         """
         (content) => {
           try {
-            const ed = window.tinymce?.get?.('Vm_Content');
-            if (!ed) {
-              const textarea = document.querySelector('#Vm_Content');
-              if (textarea) {
-                textarea.value = content;
-                return textarea.value.length > 0 ? 'textarea-only' : 'editor-missing';
-              }
-              return 'editor-missing';
+            const ta = document.querySelector('#Vm_Content');
+            if (ta) {
+              ta.value = content;
             }
-            ed.setContent(content);
-            window.tinymce.triggerSave();
+            const jq = window['jQuery'] || window['$'];
+            const sn = document.querySelector('#Vm_Content');
+            if (jq && sn && jq.fn && jq.fn.summernote) {
+              jq(sn).summernote('code', content);
+            }
+            const ed = window.tinymce?.get?.('Vm_Content');
+            if (ed) {
+              ed.setContent(content);
+              window.tinymce.triggerSave();
+            }
             const saved = document.querySelector('#Vm_Content')?.value ?? '';
-            if (saved.length > 0 || content.includes('<img')) {
+            if (saved.length >= Math.min(content.length, 64)) {
               return 'ok';
             }
-            return 'empty-textarea';
+            return 'empty-textarea:' + saved.length;
           } catch (err) {
             return 'error:' + String(err);
           }
@@ -425,8 +428,7 @@ public sealed class QaPostService
         contentHtml)
       .ConfigureAwait(false);
 
-    return string.Equals(writeResult, "ok", StringComparison.Ordinal)
-           || string.Equals(writeResult, "textarea-only", StringComparison.Ordinal);
+    return string.Equals(writeResult, "ok", StringComparison.Ordinal);
   }
 
   private static async Task<string?> ReadValidationErrorsAsync(IPage page)

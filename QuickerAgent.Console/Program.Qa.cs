@@ -32,9 +32,20 @@ internal static partial class Program
 
   private static async Task<int> RunQaPostAsync(QaOptions options, ILoggerFactory loggerFactory)
   {
-    if (string.IsNullOrWhiteSpace(options.Title))
+    string title;
+    try
     {
-      await EmitErrorAsync(options.Json, "MISSING_TITLE", "Provide --title <text>.").ConfigureAwait(false);
+      title = await ResolveQaTitleAsync(options).ConfigureAwait(false);
+    }
+    catch (Exception ex)
+    {
+      await EmitErrorAsync(options.Json, "TITLE_READ_ERROR", ex.Message).ConfigureAwait(false);
+      return ExitCodes.Error;
+    }
+
+    if (string.IsNullOrWhiteSpace(title))
+    {
+      await EmitErrorAsync(options.Json, "MISSING_TITLE", "Provide --title <text> or --title-file <path>.").ConfigureAwait(false);
       return ExitCodes.Error;
     }
 
@@ -83,7 +94,7 @@ internal static partial class Program
 
     var request = new QaPostRequest
     {
-      Title = options.Title.Trim(),
+      Title = title.Trim(),
       CategoryId = categoryId,
       ContentHtml = QaPostService.NormalizeContentHtml(contentRaw),
       Keywords = string.IsNullOrWhiteSpace(options.Keywords) ? null : options.Keywords.Trim(),
@@ -185,10 +196,32 @@ internal static partial class Program
       contentRaw = QaPostService.NormalizeContentHtml(contentRaw);
     }
 
+    string? title = null;
+    var hasTitleInput = !string.IsNullOrWhiteSpace(options.Title)
+                        || !string.IsNullOrWhiteSpace(options.TitleFile);
+    if (hasTitleInput)
+    {
+      try
+      {
+        title = (await ResolveQaTitleAsync(options).ConfigureAwait(false)).Trim();
+        if (string.IsNullOrWhiteSpace(title))
+        {
+          await EmitErrorAsync(options.Json, "MISSING_TITLE", "Title from --title or --title-file is empty.")
+            .ConfigureAwait(false);
+          return ExitCodes.Error;
+        }
+      }
+      catch (Exception ex)
+      {
+        await EmitErrorAsync(options.Json, "TITLE_READ_ERROR", ex.Message).ConfigureAwait(false);
+        return ExitCodes.Error;
+      }
+    }
+
     var request = new QaEditRequest
     {
       QuestionId = questionId,
-      Title = string.IsNullOrWhiteSpace(options.Title) ? null : options.Title.Trim(),
+      Title = title,
       CategoryId = categoryId,
       ContentHtml = contentRaw,
       Keywords = options.Keywords,
@@ -257,6 +290,30 @@ internal static partial class Program
     return new QaPostService(new QuickerWebLoginService(loginLogger), qaLogger);
   }
 
+  private static async Task<string> ResolveQaTitleAsync(QaOptions options)
+  {
+    var hasInline = !string.IsNullOrWhiteSpace(options.Title);
+    var hasFile = !string.IsNullOrWhiteSpace(options.TitleFile);
+
+    if (hasInline && hasFile)
+    {
+      throw new InvalidOperationException("Provide only one of --title or --title-file.");
+    }
+
+    if (hasFile)
+    {
+      var path = Path.GetFullPath(options.TitleFile!);
+      if (!File.Exists(path))
+      {
+        throw new FileNotFoundException($"Title file not found: {path}");
+      }
+
+      return await File.ReadAllTextAsync(path, Utf8NoBom).ConfigureAwait(false);
+    }
+
+    return options.Title ?? string.Empty;
+  }
+
   private static async Task<string> ResolveQaContentAsync(QaOptions options)
   {
     var hasInline = !string.IsNullOrWhiteSpace(options.Content);
@@ -298,6 +355,9 @@ public sealed class QaOptions
 
   [Option("title", HelpText = "Topic title.")]
   public string? Title { get; set; }
+
+  [Option("title-file", HelpText = "Path to UTF-8 topic title file (avoids shell encoding issues).")]
+  public string? TitleFile { get; set; }
 
   [Option("category", HelpText = "Category id or Chinese name (e.g. 4 or 功能建议).")]
   public string? Category { get; set; }
