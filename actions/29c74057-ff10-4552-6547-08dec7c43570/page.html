@@ -1,0 +1,88 @@
+<div class="qk-doc">
+  <header class="qk-hero">
+    <h1>固定到所有桌面</h1>
+    <p class="qk-summary">
+      将当前窗口<strong>固定到所有虚拟桌面</strong>，或取消固定；右键菜单还可移动窗口、切换相邻桌面、新建桌面。
+      纯 C# 调用 Windows 虚拟桌面 COM 接口，<strong>无需 VirtualDesktop11.exe</strong>。
+    </p>
+  </header>
+
+  <section class="qk-section">
+    <h2>快速上手</h2>
+    <ol>
+      <li>将目标窗口置于前台（或后续通过参数指定句柄）</li>
+      <li><strong>单击</strong>动作：切换「固定 / 取消固定」</li>
+      <li><strong>长按或右键</strong>动作：打开扩展菜单（移动窗口、切换桌面、新建桌面）</li>
+    </ol>
+    <p class="qk-footnote">通知分两行：第一行操作结果，第二行窗口标题；无相邻桌面等边界情况会显示 Warning。</p>
+  </section>
+
+  <section class="qk-section">
+    <h2>单击（默认）</h2>
+    <ul>
+      <li><strong>切换固定</strong>：前台窗口固定到所有虚拟桌面，或取消固定</li>
+      <li>等价于 <code>mode=toggle</code>（默认）</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>右键菜单</h2>
+    <ul>
+      <li><strong>移动窗口到相邻桌面</strong>：左 / 右</li>
+      <li><strong>切换到相邻桌面</strong>：左 / 右</li>
+      <li><strong>新建虚拟桌面</strong>：创建并切换到新桌面</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>可选参数</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>参数</th>
+          <th>说明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>handle</code></td>
+          <td>窗口句柄；<code>0</code> 或不填表示前台窗口</td>
+        </tr>
+        <tr>
+          <td><code>mode</code></td>
+          <td>
+            <code>toggle</code>（默认）、<code>pin</code>、<code>unpin</code>、
+            <code>moveWindowLeft</code> / <code>moveWindowRight</code>、
+            <code>switchLeft</code> / <code>switchRight</code>、
+            <code>newDesktop</code>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="qk-footnote">右键菜单项通过动作参数传入，例如 <code>mode=moveWindowRight</code>。</p>
+  </section>
+
+  <section class="qk-section">
+    <h2>环境要求</h2>
+    <ul>
+      <li>Windows 10 / 11（虚拟桌面功能）</li>
+      <li>Quicker <strong>1.39.0</strong> 及以上（低权限 C# 脚本）</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>常见问题</h2>
+    <ul class="qk-faq">
+      <li><strong>首次运行较慢？</strong><br>低权限 C# 脚本首次编译需数秒，之后会快很多。</li>
+      <li><strong>提示无法获取窗口句柄？</strong><br>请确认有前台窗口，或通过 <code>handle</code> 传入有效句柄。</li>
+      <li><strong>与 VirtualDesktop11.exe 的关系？</strong><br>本动作内置同等 COM 调用，无需额外下载 exe；对标经典 PinWindow 体验。</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>相关链接</h2>
+    <div class="qk-links">
+      <a class="qk-chip" href="https://getquicker.net/Sharedaction?code=29c74057-ff10-4552-6547-08dec7c43570#tab=discuss">讨论区</a>
+    </div>
+  </section>
+</div>

@@ -1,0 +1,79 @@
+<div class="qk-doc">
+  <header class="qk-hero">
+    <h1>云笔记</h1>
+    <p class="qk-summary">在 Quicker 里写 Markdown 笔记：多篇管理、标签与搜索。笔记先保存在本机，再通过<strong>专为云笔记设计的同步引擎</strong>，在多台电脑间安全、省流量地保持一致。</p>
+  </header>
+
+  <section class="qk-section">
+    <h2>强大的云同步</h2>
+    <p>云笔记不是简单「整包上传」，而是为多篇笔记单独建立版本与校验，在 Quicker 云状态上实现<strong>增量、可感知、可恢复</strong>的同步。</p>
+    <ul>
+      <li><strong>只同步有变化的笔记</strong>：启动与手动同步时，优先比对清单，仅拉取 / 上传实际改过的条目，减少等待与流量</li>
+      <li><strong>每条笔记独立版本</strong>：标题、标签、正文分别追踪修订号与内容指纹，避免「整库覆盖」带来的误删误改</li>
+      <li><strong>冲突提前发现</strong>：两台电脑同时改过同一笔记时，状态栏与云同步面板会明确提示，而不是悄悄用旧内容覆盖新内容</li>
+      <li><strong>本地优先、后台上传</strong>：编辑即时落盘到本机，停写后自动上传；也可随时点同步状态立即完成拉取与上传</li>
+      <li><strong>删除也同步</strong>：移入回收站会在云端标记，可在其它设备恢复；彻底删除后多端一致</li>
+      <li><strong>完整同步一键兜底</strong>：需要时可执行完整同步，先拉云端更新再上传本地变更，并优先刷新当前正在编辑的笔记</li>
+    </ul>
+    <p class="qk-footnote">云笔记使用独立的云端数据空间，与剪贴板超级面板等其它 Quicker 云数据互不干扰。</p>
+  </section>
+
+  <section class="qk-section">
+    <h2>主要功能</h2>
+    <ul>
+      <li><strong>多笔记管理</strong>：搜索、标签筛选、按更新时间或标题排序</li>
+      <li><strong>Markdown 编辑</strong>：源码、预览、分栏三种模式；支持公式与常用格式</li>
+      <li><strong>回收站</strong>：误删可恢复，也可彻底删除</li>
+      <li><strong>导出</strong>：可将单条笔记导出为 Markdown 文件</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>使用说明</h2>
+    <ol>
+      <li>在 Quicker 面板运行本动作即可打开云笔记</li>
+      <li>左侧选择笔记或点击「新建」；右侧编辑标题、标签与正文</li>
+      <li>编辑内容会自动保存并同步；标题栏同步状态可查看当前笔记是否已同步，点击可立即同步</li>
+      <li>侧栏底部可打开「云同步」查看整体状态，或进入「回收站」恢复已删笔记</li>
+    </ol>
+    <p class="qk-footnote">快捷键：<kbd>Ctrl</kbd> + <kbd>N</kbd> 新建笔记；<kbd>Ctrl</kbd> + <kbd>S</kbd> 保存当前笔记。</p>
+  </section>
+
+  <section class="qk-section">
+    <h2>数据保存位置</h2>
+    <p>笔记默认保存在：<code>%UserProfile%\Documents\Quicker\CloudNotes\</code></p>
+    <p class="qk-footnote">可在此文件夹备份或迁移笔记数据；云同步内容随 Quicker 账号保存在云端。</p>
+  </section>
+
+  <section class="qk-section">
+    <h2>环境要求</h2>
+    <ul>
+      <li>Windows 10 及以上</li>
+      <li><a href="https://dotnet.microsoft.com/download/dotnet-framework/net472">.NET Framework 4.7.2</a> 或更高</li>
+      <li>Quicker <strong>1.45.0</strong> 及以上</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>常见问题</h2>
+    <ul>
+      <li><strong>同步不成功</strong>：确认已登录 Quicker 账号，打开「云同步」查看状态后重试或执行完整同步</li>
+      <li><strong>打开失败或提示加载错误</strong>：尝试重新运行动作，或更新到最新版动作</li>
+      <li><strong>单条笔记过大</strong>：建议正文不超过约 200KB，以免影响同步</li>
+      <li><strong>提示冲突</strong>：说明本机与云端都曾修改过该笔记，请在云同步面板查看详情后，选择保留一侧内容或手动合并后再同步</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>最近更新</h2>
+    <p><strong>v1.0.1</strong> — 首次发布：Markdown 多笔记、增量云同步与冲突检测、回收站与同步状态面板。</p>
+  </section>
+
+  <section class="qk-section">
+    <h2>相关链接</h2>
+    <div class="qk-links">
+      <a class="qk-chip" href="https://github.com/QuickerHub/quicker-workspace/tree/main/packages/productivity/cloud-notes">GitHub 源码</a>
+      <a class="qk-chip" href="https://getquicker.net/Knowledge/CloudState">Quicker 云状态说明</a>
+    </div>
+  </section>
+</div>
