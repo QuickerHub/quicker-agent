@@ -117,6 +117,21 @@ internal static class QkagentCliHelp
 
         Cmd("qa edit", "Edit an existing QA topic (author only).", "qkagent qa edit --id <questionId|url> [--title <text> | --title-file <path>] [--category <id|name>] [--content <html> | --content-file <path>] [--keywords <text>] [--json]",
           opts: QaEditOpts()),
+
+        Cmd("action-topics list", "List discussion topics for a shared action.", "qkagent action-topics list --code <sharedId|url> [--include-archived] [--json]",
+          opts: ActionTopicsListOpts()),
+
+        Cmd("action-topics get", "Fetch a topic with replies and suggested GitHub issue labels.", "qkagent action-topics get --id <topicId|url> [--json]",
+          opts: ActionTopicsGetOpts()),
+
+        Cmd("action-topics reply", "Reply to a shared-action topic (login required).", "qkagent action-topics reply --id <topicId|url> (--content <text> | --content-file <path>) [--json]",
+          opts: ActionTopicsReplyOpts()),
+
+        Cmd("action-topics archive", "Archive a topic as the action author.", "qkagent action-topics archive --id <topicId|url> [--json]",
+          opts: ActionTopicsArchiveOpts()),
+
+        Cmd("action-topics mark", "Mark a topic handled (alias for archive).", "qkagent action-topics mark --id <topicId|url> [--status handled] [--json]",
+          opts: ActionTopicsMarkOpts()),
       },
     };
   }
@@ -165,6 +180,41 @@ internal static class QkagentCliHelp
     Option("content", "New body (HTML or plain text)."),
     Option("content-file", "Path to new body file."),
     Option("keywords", "New keywords (pass empty string to clear)."),
+    Option("json", "Structured output."),
+  ];
+
+  private static object[] ActionTopicsListOpts() =>
+  [
+    Option("code", "Shared action id or Topics/Sharedaction URL."),
+    Option("include-archived", "Include archived topics."),
+    Option("json", "Structured output."),
+  ];
+
+  private static object[] ActionTopicsGetOpts() =>
+  [
+    Option("id", "Topic id or /Common/Topics/ViewTopic/{id} URL."),
+    Option("login", "Sign in before reading (author controls)."),
+    Option("json", "Structured output."),
+  ];
+
+  private static object[] ActionTopicsReplyOpts() =>
+  [
+    Option("id", "Topic id or ViewTopic URL."),
+    Option("content", "Reply body (HTML or plain text)."),
+    Option("content-file", "Path to reply body file."),
+    Option("json", "Structured output."),
+  ];
+
+  private static object[] ActionTopicsArchiveOpts() =>
+  [
+    Option("id", "Topic id or ViewTopic URL."),
+    Option("json", "Structured output."),
+  ];
+
+  private static object[] ActionTopicsMarkOpts() =>
+  [
+    Option("id", "Topic id or ViewTopic URL."),
+    Option("status", "handled (default) archives the topic."),
     Option("json", "Structured output."),
   ];
 

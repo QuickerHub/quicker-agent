@@ -6,7 +6,7 @@
 
 [CmdletBinding()]
 param(
-    [string[]]$Skills = @('quicker-agent-exe', 'action-doc-workflow'),
+    [string[]]$Skills = @('quicker-agent-exe', 'action-doc-workflow', 'action-topics-triage'),
     [switch]$SkipCommands,
     [switch]$SkipSkills
 )
@@ -144,7 +144,7 @@ if (-not $SkipCommands) {
 }
 
 Write-Host ''
-Write-Host 'Done. In Cursor chat type /action-info to run the slash command.' -ForegroundColor Cyan
-Write-Host 'Skills are available globally (quicker-agent-exe, action-doc-workflow).' -ForegroundColor Cyan
+Write-Host 'Done. In Cursor chat type /action-info or /action-feedback.' -ForegroundColor Cyan
+Write-Host 'Skills are available globally (quicker-agent-exe, action-doc-workflow, action-topics-triage).' -ForegroundColor Cyan
 
 exit 0

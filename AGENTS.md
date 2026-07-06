@@ -4,7 +4,7 @@
 
 **CLI 自描述（优先）**：`qkagent help --json` — 命令、参数、工作流摘要。操作指南：`qkagent guide get --topic workflow --json`。人类可读：[docs/cli-commands.md](docs/cli-commands.md)。
 
-详细用法见 [README.md](README.md)。Cursor Skill：动作页说明 [`.cursor/skills/action-doc-workflow/SKILL.md`](.cursor/skills/action-doc-workflow/SKILL.md)、CLI [`.cursor/skills/quicker-agent-exe/SKILL.md`](.cursor/skills/quicker-agent-exe/SKILL.md)、发布 [`.cursor/skills/qkagent-publish-exe/SKILL.md`](.cursor/skills/qkagent-publish-exe/SKILL.md)。
+详细用法见 [README.md](README.md)。Cursor Skill：动作页说明 [`.cursor/skills/action-doc-workflow/SKILL.md`](.cursor/skills/action-doc-workflow/SKILL.md)、动作讨论 [`.cursor/skills/action-topics-triage/SKILL.md`](.cursor/skills/action-topics-triage/SKILL.md)、CLI [`.cursor/skills/quicker-agent-exe/SKILL.md`](.cursor/skills/quicker-agent-exe/SKILL.md)、发布 [`.cursor/skills/qkagent-publish-exe/SKILL.md`](.cursor/skills/qkagent-publish-exe/SKILL.md)。
 
 ## 1. 可执行文件在哪
 
@@ -54,6 +54,8 @@ qkagent.exe pull --code <sharedId> [--json]
 | `GetQuickerActionDocPage` | 固定 UI 文案/选择器（编辑信息、源代码、更新动作信息 等） |
 | `ActionDescriptionService` | `GetHtmlAsync` / `SetHtmlAsync`（登录 → 编辑信息 → 源代码视图读/写 → **更新动作信息**） |
 | `ActionLocalStore` | 本地 `actions/<sharedId>/info.html` 路径与 `meta.yaml` |
+| `ActionTopicsService` | 动作讨论区 list/get/reply/archive（`Share/Actions/Topics`） |
+| `GetQuickerActionTopicsPage` | 动作讨论 URL 与 DOM 选择器 |
 
 ## 5. action-doc 抓取流程（与 Playwright MCP 手动步骤一致）
 

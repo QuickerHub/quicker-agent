@@ -1,9 +1,10 @@
 ---
 name: quicker-agent-exe
 description: >-
-  Runs the local qkagent CLI (Playwright) to pull/apply getquicker.net shared-action intro HTML.
+  Runs the local qkagent CLI (Playwright) to pull/apply getquicker.net shared-action intro HTML,
+  triage action discussion topics, or manage QA posts.
   Use when the user mentions qkagent, action-info, 动作说明, action-doc, page.html,
-  getquicker intro, QA 发帖, getquicker QA, or /action-info.
+  getquicker intro, QA 发帖, getquicker QA, action-topics, 动作讨论, action-feedback, or /action-info.
 disable-model-invocation: false
 ---
 
@@ -24,7 +25,7 @@ qkagent guide get --topic workflow --json
 ## 作用
 
 - **`pull` / `apply --dir`**：读写 **`tools/qkagent/actions/<sharedId>/`**（源文件 `page.html`，上传 `info.html`）。
-- **`qa post`** / **`qa edit`**：在 getquicker.net 讨论区发表或修改话题（TinyMCE 正文）。
+- **`action-topics`**：分享动作讨论区 list/get/reply/archive（`/Share/Actions/Topics`）。
 - **`get` / `upload|set`**：任意路径读写 HTML。
 - **抓取**：登录 → 编辑页 → Summernote **源代码** 读/写，UTF-8 无 BOM。
 - **发布**：写回 HTML 后点击 **「更新动作信息」**。
@@ -56,6 +57,10 @@ qkagent pull --code <sharedId> [--json]
 qkagent apply --dir actions/<sharedId> [--json]
 qkagent qa post --title <text> --category <id|name> (--content <html> | --content-file <path>) [--json]
 qkagent qa edit --id <questionId|url> [--title <text>] [--category <id|name>] [--content <html> | --content-file <path>] [--json]
+qkagent action-topics list --code <sharedId> [--include-archived] [--json]
+qkagent action-topics get --id <topicId> [--login] [--json]
+qkagent action-topics reply --id <topicId> --content <text> [--json]
+qkagent action-topics archive --id <topicId> [--json]
 qkagent action-doc get|upload|set (--code ... | --dir <folder>) [--json]
 ```
 
@@ -70,6 +75,6 @@ cd tools/qkagent
 pwsh -NoProfile -File ./scripts/install-cursor-user.ps1
 ```
 
-Chat 快捷入口：`/action-info`（源文件 `tools/qkagent/.cursor/commands/action-info.md`）。
+Chat 快捷入口：`/action-info`、`/action-feedback`。
 
 发布 exe：`pwsh -NoProfile -File ./publish/publish-agent.ps1`（含 PATH + 可选 Cursor 用户资源安装）。

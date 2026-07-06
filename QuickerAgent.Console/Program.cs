@@ -48,12 +48,13 @@ internal static partial class Program
       });
     });
 
-    var result = Parser.Default.ParseArguments<ActionDocOptions, GuideOptions, QaOptions>(args);
+    var result = Parser.Default.ParseArguments<ActionDocOptions, GuideOptions, QaOptions, ActionTopicsOptions>(args);
     return await result
       .MapResult(
         (ActionDocOptions o) => RunActionDocAsync(o, loggerFactory),
         (GuideOptions o) => RunGuideAsync(o),
         (QaOptions o) => RunQaAsync(o, loggerFactory),
+        (ActionTopicsOptions o) => RunActionTopicsAsync(o, loggerFactory),
         _ => Task.FromResult(ExitCodes.Error))
       .ConfigureAwait(false);
   }

@@ -63,6 +63,22 @@ qkagent action-doc set --dir .\samples\action-doc --json
 
 ---
 
+## 动作讨论区（action-topics）
+
+处理分享动作下的用户反馈（`/Share/Actions/Topics?code=...`）：
+
+```powershell
+qkagent action-topics list --code <sharedId> [--include-archived] [--json]
+qkagent action-topics get --id <topicId|ViewTopic URL> [--login] [--json]
+qkagent action-topics reply --id <topicId> (--content <text> | --content-file <path>) [--json]
+qkagent action-topics archive --id <topicId> [--json]
+qkagent action-topics mark --id <topicId> [--status handled] [--json]
+```
+
+完整 triage → GitHub issue 流程见 Cursor skill **action-feedback-pipeline**；Chat 入口 **`/action-feedback`**。
+
+---
+
 ## 退出码
 
 | 码 | 含义 |
