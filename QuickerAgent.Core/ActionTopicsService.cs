@@ -262,41 +262,12 @@ public sealed class ActionTopicsService
           .IsVisibleAsync()
           .ConfigureAwait(false);
 
-        if (requiresOfficialDraft && !await HasOfficialReplyDraftAsync(page, snippet).ConfigureAwait(false))
+        if (requiresOfficialDraft && !await HasNewCommentDraftAsync(page, snippet).ConfigureAwait(false))
         {
           var probe = await ProbeReplyEditorStateAsync(page).ConfigureAwait(false);
           return ActionTopicsOperationResult.Fail(
             "REPLY_WRITE_FAILED",
             $"Reply draft was empty before submit. Probe: {probe}");
-        }
-
-        if (requiresOfficialDraft)
-        {
-          try
-          {
-            await page
-              .WaitForFunctionAsync(
-                TopicReplyEditorInterop.IsSubmitReplyEnabledScript,
-                new PageWaitForFunctionOptions { Timeout = 10_000 })
-              .ConfigureAwait(false);
-          }
-          catch (TimeoutException)
-          {
-            var probe = await ProbeReplyEditorStateAsync(page).ConfigureAwait(false);
-            return ActionTopicsOperationResult.Fail(
-              "SUBMIT_BUTTON_DISABLED",
-              $"Submit reply stayed disabled after writing. Probe: {probe}");
-          }
-
-          var preSubmitProbe = await ProbeReplyEditorStateAsync(page).ConfigureAwait(false);
-          await File.WriteAllTextAsync(
-              Path.Combine(AppContext.BaseDirectory, "topic-pre-submit.html"),
-              await page.ContentAsync().ConfigureAwait(false))
-            .ConfigureAwait(false);
-          await File.WriteAllTextAsync(
-              Path.Combine(AppContext.BaseDirectory, "topic-pre-submit-probe.json"),
-              preSubmitProbe)
-            .ConfigureAwait(false);
         }
 
         if (!await TrySubmitTopicReplyAsync(page, snippet).ConfigureAwait(false))
@@ -348,11 +319,25 @@ public sealed class ActionTopicsService
       async (page, ct) =>
       {
         var detail = await ReadTopicDetailAsync(page, topicId, ct).ConfigureAwait(false);
+        var listUrl = string.IsNullOrWhiteSpace(detail.SharedActionId)
+          ? null
+          : GetQuickerActionTopicsPage.ExpandTopicsListUrl(detail.SharedActionId);
+
         if (detail.CanArchive)
         {
-          return await ClickArchiveOnViewTopicAsync(page, ct).ConfigureAwait(false)
-            ? ActionTopicsOperationResult.Success(topicId, page.Url)
-            : ActionTopicsOperationResult.Fail("ARCHIVE_CLICK_FAILED", "Archive control was found but click failed.");
+          var archived = await ClickArchiveOnViewTopicAsync(page, ct).ConfigureAwait(false);
+          if (!archived)
+          {
+            return ActionTopicsOperationResult.Fail("ARCHIVE_CLICK_FAILED", "Archive control was found but click failed.");
+          }
+
+          return ActionTopicsOperationResult.Success(topicId, listUrl ?? page.Url);
+        }
+
+        if (await TryArchiveViaAdminPostAsync(page, topicId).ConfigureAwait(false))
+        {
+          _logger.LogInformation("Archived action topic {TopicId} via admin POST", topicId);
+          return ActionTopicsOperationResult.Success(topicId, listUrl ?? page.Url);
         }
 
         if (string.IsNullOrWhiteSpace(detail.SharedActionId))
@@ -362,7 +347,7 @@ public sealed class ActionTopicsService
             "Could not resolve shared action id for this topic.");
         }
 
-        var listUrl = GetQuickerActionTopicsPage.ExpandTopicsListUrl(detail.SharedActionId);
+        listUrl = GetQuickerActionTopicsPage.ExpandTopicsListUrl(detail.SharedActionId);
         await NavigateAsync(page, listUrl, ct).ConfigureAwait(false);
         await page
           .WaitForSelectorAsync(GetQuickerActionTopicsPage.QuestionListSelector, new PageWaitForSelectorOptions
@@ -400,9 +385,40 @@ public sealed class ActionTopicsService
 
         await ConfirmArchiveDialogAsync(page).ConfigureAwait(false);
         _logger.LogInformation("Archived action topic {TopicId} from list page", topicId);
-        return ActionTopicsOperationResult.Success(topicId, GetQuickerActionTopicsPage.ExpandViewTopicUrl(topicId));
+        return ActionTopicsOperationResult.Success(topicId, listUrl);
       });
   }
+
+  private const string ArchiveViaAdminPostScript = """
+    async (topicId) => {
+      const adminResp = await fetch(`/QA/adminquestion?id=${topicId}`, { credentials: 'same-origin' });
+      if (!adminResp.ok) return false;
+      const html = await adminResp.text();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const form = doc.querySelector('form[method="post"]');
+      const token = form?.querySelector('input[name="__RequestVerificationToken"]')?.value;
+      if (!token) return false;
+      const archiveBtn = [...form.querySelectorAll('button[formaction]')].find(btn => {
+        const label = (btn.textContent || '').replace(/\s+/g, '');
+        const action = btn.getAttribute('formaction') || '';
+        return label.includes('归档') || action.includes('Archive');
+      });
+      if (!archiveBtn) return false;
+      const formaction = archiveBtn.getAttribute('formaction');
+      if (!formaction) return false;
+      const body = new URLSearchParams({ __RequestVerificationToken: token });
+      const postResp = await fetch(formaction, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString(),
+      });
+      return postResp.ok;
+    }
+    """;
+
+  private static Task<bool> TryArchiveViaAdminPostAsync(IPage page, int topicId) =>
+    page.EvaluateAsync<bool>(ArchiveViaAdminPostScript, topicId);
 
   private static async Task<bool> ClickArchiveOnViewTopicAsync(IPage page, CancellationToken cancellationToken)
   {
@@ -520,156 +536,34 @@ public sealed class ActionTopicsService
   private static async Task<bool> TryWriteOfficialTopicReplyAsync(IPage page, string html, string plain)
   {
     var snippet = plain.Length > 16 ? plain[..16] : plain;
-    var editorIndex = await page
-      .EvaluateAsync<int>(TopicReplyEditorInterop.FindOfficialReplyEditorIndexScript)
+
+    var apiResult = await page
+      .EvaluateAsync<TopicReplyWritePayload>(TopicReplyEditorInterop.WriteNewCommentReplyScript, new { html })
       .ConfigureAwait(false);
 
-    if (editorIndex < 0)
-    {
-      return false;
-    }
-
-    if (await TryWriteOfficialTopicReplyViaSourceViewPlaywrightAsync(page, editorIndex, html, snippet)
-          .ConfigureAwait(false))
+    if (apiResult?.Ok == true && await HasNewCommentDraftAsync(page, snippet).ConfigureAwait(false))
     {
       return true;
     }
 
-    var officialEditor = page.Locator(".note-editor").Nth(editorIndex);
-    var editable = officialEditor.Locator(".note-editing-area .note-editable").First;
+    var editable = page
+      .Locator($"#{TopicReplyEditorInterop.NewCommentTextareaId}")
+      .Locator("xpath=ancestor::div[contains(@class,'note-editor')]//div[contains(@class,'note-editing-area')]//div[contains(@class,'note-editable')]")
+      .First;
 
     if (await editable.IsVisibleAsync().ConfigureAwait(false))
     {
-      await page.EvaluateAsync(
-        """
-        (index) => {
-          const editor = document.querySelectorAll('.note-editor')[index];
-          const ta = editor?.querySelector('textarea');
-          const jq = window['jQuery'] || window['$'];
-          if (ta && jq?.fn?.summernote) {
-            jq(ta).summernote('focus');
-          }
-          editor?.querySelector('.note-editing-area .note-editable')?.focus();
-        }
-        """,
-        editorIndex).ConfigureAwait(false);
-
       await editable.ClickAsync().ConfigureAwait(false);
       await editable.PressSequentiallyAsync(plain, new LocatorPressSequentiallyOptions { Delay = 25 })
         .ConfigureAwait(false);
       await page.WaitForTimeoutAsync(500).ConfigureAwait(false);
-
-      _ = await page
-        .EvaluateAsync<TopicReplyWritePayload>(
-          TopicReplyEditorInterop.SyncOfficialReplyFromEditableScript,
-          editorIndex)
-        .ConfigureAwait(false);
-
-      if (await HasOfficialReplyDraftAsync(page, snippet).ConfigureAwait(false))
-      {
-        return true;
-      }
     }
 
-    foreach (var write in new Func<Task<TopicReplyWritePayload?>>[]
-             {
-               () => page.EvaluateAsync<TopicReplyWritePayload>(
-                 TopicReplyEditorInterop.WriteOfficialReplyViaSourceViewScript,
-                 new { html }),
-               () => page.EvaluateAsync<TopicReplyWritePayload>(
-                 TopicReplyEditorInterop.WriteOfficialReplyScript,
-                 new { html }),
-             })
-    {
-      _ = await write().ConfigureAwait(false);
-      if (await HasOfficialReplyDraftAsync(page, snippet).ConfigureAwait(false))
-      {
-        return true;
-      }
-    }
-
-    return false;
+    return await HasNewCommentDraftAsync(page, snippet).ConfigureAwait(false);
   }
 
-  private static async Task<bool> TryWriteOfficialTopicReplyViaSourceViewPlaywrightAsync(
-    IPage page,
-    int editorIndex,
-    string html,
-    string snippet)
-  {
-    var editor = page.Locator(".note-editor").Nth(editorIndex);
-    var sourceBtn = editor
-      .Locator("button[aria-label*='源代码'], button[data-original-title*='源代码'], button")
-      .Filter(new LocatorFilterOptions { HasText = GetQuickerActionDocPage.SourceCodeButtonName })
-      .First;
-
-    if (!await sourceBtn.IsVisibleAsync().ConfigureAwait(false))
-    {
-      return false;
-    }
-
-    await sourceBtn.ClickAsync().ConfigureAwait(false);
-    var codable = editor.Locator(".note-codable, div.note-editing-area textarea").First;
-    try
-    {
-      await codable.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10_000 })
-        .ConfigureAwait(false);
-    }
-    catch (TimeoutException)
-    {
-      return false;
-    }
-
-    await codable.FillAsync(html).ConfigureAwait(false);
-    await page
-      .EvaluateAsync(
-        """
-        (index) => {
-          const editor = document.querySelectorAll('.note-editor')[index];
-          const codable = editor?.querySelector('.note-codable, .note-editing-area textarea');
-          codable?.dispatchEvent(new Event('input', { bubbles: true }));
-          codable?.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-        """,
-        editorIndex)
-      .ConfigureAwait(false);
-
-    await sourceBtn.ClickAsync().ConfigureAwait(false);
-    await editor
-      .Locator(".note-editing-area .note-editable")
-      .First
-      .WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10_000 })
-      .ConfigureAwait(false);
-
-    return await HasOfficialReplyDraftAsync(page, snippet).ConfigureAwait(false);
-  }
-
-  private static async Task<bool> HasOfficialReplyDraftAsync(IPage page, string snippet)
-  {
-    return await page
-      .EvaluateAsync<bool>(
-        """
-        (snippet) => {
-          const h5 = [...document.querySelectorAll('h5')].find(h => (h.textContent || '').includes('回复主贴'));
-          if (!h5) return false;
-          const needle = snippet.replace(/\\s+/g, '');
-          const editors = [...document.querySelectorAll('.note-editor')];
-          let editor = null;
-          for (const node of editors) {
-            if (h5.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING) {
-              editor = node;
-              break;
-            }
-          }
-          if (!editor) return false;
-          const editable = editor.querySelector('.note-editing-area .note-editable');
-          const text = (editable?.innerText || '').replace(/\\s+/g, '');
-          return needle.length > 0 && text.includes(needle);
-        }
-        """,
-        snippet)
-      .ConfigureAwait(false);
-  }
+  private static Task<bool> HasNewCommentDraftAsync(IPage page, string snippet) =>
+    page.EvaluateAsync<bool>(TopicReplyEditorInterop.HasNewCommentDraftScript, snippet);
 
   private static async Task<bool> TryWriteThreadedTopicCommentAsync(IPage page, string plain)
   {
@@ -708,6 +602,8 @@ public sealed class ActionTopicsService
     }
 
     page.Request += OnRequest;
+    EventHandler<IDialog> dialogHandler = (_, dialog) => _ = dialog.AcceptAsync();
+    page.Dialog += dialogHandler;
 
     try
     {
@@ -724,21 +620,23 @@ public sealed class ActionTopicsService
           .First;
       }
 
-      if (!await submitBtn.IsEnabledAsync().ConfigureAwait(false))
+      if (!await submitBtn.IsVisibleAsync().ConfigureAwait(false))
       {
         return false;
       }
 
       var responseTask = page.WaitForResponseAsync(
-        r => r.Request.Method is "POST" or "PUT",
+        r => r.Request.Method is "POST" or "PUT"
+             && r.Url.Contains(TopicReplyEditorInterop.CreateAnswerUrlFragment, StringComparison.OrdinalIgnoreCase),
         new PageWaitForResponseOptions { Timeout = 30_000 });
 
       await submitBtn.ClickAsync().ConfigureAwait(false);
       LastSubmitRequests.Add("submit:playwright-click");
 
+      IResponse? response = null;
       try
       {
-        var response = await responseTask.ConfigureAwait(false);
+        response = await responseTask.ConfigureAwait(false);
         LastSubmitRequests.Add($"RESPONSE {response.Status} {response.Url}");
       }
       catch (TimeoutException)
@@ -746,18 +644,22 @@ public sealed class ActionTopicsService
         // Continue to DOM verification.
       }
 
+      if (response is not null && !response.Ok)
+      {
+        return false;
+      }
+
       try
       {
         await page
-          .WaitForLoadStateAsync(LoadState.NetworkIdle, new PageWaitForLoadStateOptions { Timeout = 15_000 })
+          .WaitForLoadStateAsync(LoadState.DOMContentLoaded, new PageWaitForLoadStateOptions { Timeout = 30_000 })
           .ConfigureAwait(false);
       }
       catch (TimeoutException)
       {
-        // Continue.
+        await page.ReloadAsync(new PageReloadOptions { WaitUntil = WaitUntilState.DOMContentLoaded }).ConfigureAwait(false);
       }
 
-      await page.ReloadAsync(new PageReloadOptions { WaitUntil = WaitUntilState.DOMContentLoaded }).ConfigureAwait(false);
       await page.WaitForSelectorAsync("h1.topic-title", new PageWaitForSelectorOptions { Timeout = 30_000 })
         .ConfigureAwait(false);
 
@@ -770,6 +672,7 @@ public sealed class ActionTopicsService
     finally
     {
       page.Request -= OnRequest;
+      page.Dialog -= dialogHandler;
     }
   }
 
@@ -778,34 +681,11 @@ public sealed class ActionTopicsService
       .EvaluateAsync<string>(
         """
         () => JSON.stringify({
-          editorIndex: (() => {
-            const h5 = [...document.querySelectorAll('h5')].find(h => (h.textContent || '').includes('回复主贴'));
-            if (!h5) return -1;
-            const editors = [...document.querySelectorAll('.note-editor')];
-            for (let i = 0; i < editors.length; i++) {
-              if (h5.compareDocumentPosition(editors[i]) & Node.DOCUMENT_POSITION_FOLLOWING) return i;
-            }
-            return -1;
-          })(),
-          officialEditable: (() => {
-            const h5 = [...document.querySelectorAll('h5')].find(h => (h.textContent || '').includes('回复主贴'));
-            if (!h5) return '';
-            for (const editor of document.querySelectorAll('.note-editor')) {
-              if (!(h5.compareDocumentPosition(editor) & Node.DOCUMENT_POSITION_FOLLOWING)) continue;
-              return (editor.querySelector('.note-editing-area .note-editable')?.innerText || '').slice(0, 80);
-            }
-            return '';
-          })(),
-          draftCode: (() => {
-            const h5 = [...document.querySelectorAll('h5')].find(h => (h.textContent || '').includes('回复主贴'));
-            if (!h5) return '';
-            for (const editor of document.querySelectorAll('.note-editor')) {
-              if (!(h5.compareDocumentPosition(editor) & Node.DOCUMENT_POSITION_FOLLOWING)) continue;
-              const jq = window['jQuery'] || window['$'];
-              const ta = editor.querySelector('textarea');
-              if (ta && jq?.fn?.summernote) return (jq(ta).summernote('code') || '').slice(0, 120);
-            }
-            return '';
+          newCommentCode: (() => {
+            const jq = window['jQuery'] || window['$'];
+            const ta = document.querySelector('#new-comment');
+            if (!ta || !jq?.fn?.summernote) return '';
+            return (jq(ta).summernote('code') || '').slice(0, 120);
           })(),
           submit: [...document.querySelectorAll('button')].filter(b => (b.textContent || '').includes('提交回复')).map(b => ({
             disabled: b.disabled,
