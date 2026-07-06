@@ -1,0 +1,73 @@
+<div class="qk-doc">
+  <header class="qk-hero">
+    <h1>时间</h1>
+    <p class="qk-summary">
+      在桌面上显示当前时间的小窗口，支持首次设置样式与位置，之后一键呼出；窗口可拖动、滚轮缩放，并支持鼠标穿透模式。
+    </p>
+  </header>
+
+  <section class="qk-section">
+    <h2>快速开始</h2>
+    <ol>
+      <li>安装动作后，<strong>按住 Ctrl</strong> 运行动作，进入设置模式。</li>
+      <li>在设置界面调整字体、颜色、透明度等，确认后保存。</li>
+      <li>之后直接运行动作即可显示时间窗口；再次运行可关闭（穿透模式下同样有效）。</li>
+    </ol>
+    <p class="qk-footnote">
+      首次使用会自动下载 <code>cea.cea-view-runner</code> 依赖（V2 使用 <code>.net10</code> 包）。若下载失败，请检查网络后重试，或在 Quicker 设置中确认已登录账号。
+    </p>
+  </section>
+
+  <section class="qk-section">
+    <h2>界面预览</h2>
+    <p>动态显示当前时间，样式可在设置中自定义：</p>
+    <p>
+      <img
+        alt="时间窗口预览"
+        src="https://files.getquicker.net/_sitefiles/kb/sharedaction/cca1c807-19bb-49b5-623a-08d9a4c9f420/2021/11/24/100744_113342_image.png?x-oss-process=image/resize,w_1200/quality,q_85" />
+    </p>
+  </section>
+
+  <section class="qk-section">
+    <h2>常用操作</h2>
+    <h3>正常模式</h3>
+    <ul>
+      <li><strong>关闭</strong>：双击窗口</li>
+      <li><strong>缩放</strong>：滚轮调节大小</li>
+      <li><strong>移动</strong>：拖动窗口</li>
+    </ul>
+    <h3>鼠标穿透模式</h3>
+    <ul>
+      <li>再次运行动作可关闭窗口</li>
+      <li>或通过动作右键菜单 → <strong>关闭</strong></li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>设置与焦点</h2>
+    <ul>
+      <li>重新进入设置：动作右键菜单 → <strong>设置</strong></li>
+      <li>需要调整窗口焦点相关行为时，在设置界面中修改对应选项</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>子程序调用</h2>
+    <p>若要在自己的动作里自定义高度或参数，可调用子程序：</p>
+    <ul>
+      <li>
+        <a href="https://getquicker.net/SubProgram?id=5d5c208b-f8b6-4471-65ad-08dc3bf00da0" target="_blank" rel="noopener">
+          交互_时间窗口2（子程序）
+        </a>
+      </li>
+    </ul>
+    <p class="qk-footnote">旧版 <code>交互_时间窗口</code> 已迁移至上述子程序，并适配 Quicker V2 / .NET 10。</p>
+  </section>
+
+  <section class="qk-section">
+    <h2>更新说明</h2>
+    <ul>
+      <li><strong>最新</strong>：V2 / net10 适配，修复依赖下载 404；改用 CeaViewRunner 1.2.1.0。</li>
+    </ul>
+  </section>
+</div>
