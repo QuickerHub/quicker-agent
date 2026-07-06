@@ -231,35 +231,9 @@ public sealed class QaPostService
     CancellationToken cancellationToken)
   {
     _logger.LogInformation("Opening {Url}", url);
-    await page
-      .GotoAsync(url, new PageGotoOptions
-      {
-        Timeout = 60_000,
-        WaitUntil = WaitUntilState.DOMContentLoaded,
-      })
+    return await _loginService
+      .NavigateWithLoginRetryAsync(page, url, email, password, cancellationToken)
       .ConfigureAwait(false);
-
-    if (!await _loginService.IsLoginPageAsync(page).ConfigureAwait(false))
-    {
-      return true;
-    }
-
-    _logger.LogInformation("Redirected to login; signing in again...");
-    var loggedIn = await _loginService.LoginAsync(page, email, password, cancellationToken).ConfigureAwait(false);
-    if (!loggedIn)
-    {
-      return false;
-    }
-
-    await page
-      .GotoAsync(url, new PageGotoOptions
-      {
-        Timeout = 60_000,
-        WaitUntil = WaitUntilState.DOMContentLoaded,
-      })
-      .ConfigureAwait(false);
-
-    return !await _loginService.IsLoginPageAsync(page).ConfigureAwait(false);
   }
 
   private async Task<bool> EnsureQaFormReadyAsync(IPage page, CancellationToken cancellationToken)

@@ -9,7 +9,9 @@ namespace QuickerAgent.Core;
 public sealed class QuickerWebLoginService
 {
   public const string LoginUrl = "https://getquicker.net/Identity/Account/Login";
-  private const string HomeUrl = "https://getquicker.net/";
+
+  /// <summary>Redirects to login when the session cookie is missing or expired.</summary>
+  public const string MemberUrl = "https://getquicker.net/Member";
 
   private static class XPaths
   {
@@ -28,7 +30,7 @@ public sealed class QuickerWebLoginService
 
   /// <summary>
   /// Returns true when the current page state indicates an authenticated session.
-  /// Navigates to the site home when checking from an unknown page.
+  /// Navigates to a member-only page (not the public home page) so anonymous visitors are not mistaken for logged-in users.
   /// </summary>
   public async Task<bool> IsLoggedInAsync(IPage page, CancellationToken cancellationToken = default)
   {
@@ -37,16 +39,59 @@ public sealed class QuickerWebLoginService
     try
     {
       await page
-        .GotoAsync(HomeUrl, new PageGotoOptions { Timeout = 30_000, WaitUntil = WaitUntilState.DOMContentLoaded })
+        .GotoAsync(MemberUrl, new PageGotoOptions { Timeout = 30_000, WaitUntil = WaitUntilState.DOMContentLoaded })
         .ConfigureAwait(false);
 
-      return !await IsLoginPageAsync(page).ConfigureAwait(false);
+      if (await IsLoginPageAsync(page).ConfigureAwait(false))
+      {
+        return false;
+      }
+
+      return page.Url.Contains("/Member", StringComparison.OrdinalIgnoreCase)
+             && !IsLoginUrl(page.Url);
     }
     catch (Exception ex)
     {
       _logger.LogDebug(ex, "Could not verify login state; treating as logged out.");
       return false;
     }
+  }
+
+  /// <summary>
+  /// Navigates to <paramref name="url"/> and signs in when the site redirects to the login page.
+  /// </summary>
+  public async Task<bool> NavigateWithLoginRetryAsync(
+    IPage page,
+    string url,
+    string email,
+    string password,
+    CancellationToken cancellationToken = default)
+  {
+    ArgumentException.ThrowIfNullOrEmpty(email);
+    ArgumentException.ThrowIfNullOrEmpty(password);
+    ArgumentException.ThrowIfNullOrWhiteSpace(url);
+
+    await page
+      .GotoAsync(url, new PageGotoOptions { Timeout = 60_000, WaitUntil = WaitUntilState.DOMContentLoaded })
+      .ConfigureAwait(false);
+
+    if (!await IsLoginPageAsync(page).ConfigureAwait(false))
+    {
+      return true;
+    }
+
+    _logger.LogInformation("Redirected to login while opening {Url}; signing in again...", url);
+    var loggedIn = await LoginAsync(page, email, password, cancellationToken).ConfigureAwait(false);
+    if (!loggedIn)
+    {
+      return false;
+    }
+
+    await page
+      .GotoAsync(url, new PageGotoOptions { Timeout = 60_000, WaitUntil = WaitUntilState.DOMContentLoaded })
+      .ConfigureAwait(false);
+
+    return !await IsLoginPageAsync(page).ConfigureAwait(false);
   }
 
   /// <summary>
