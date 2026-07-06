@@ -35,3 +35,10 @@ action_doc_builder/.venv/
 
 # Built action intros (source: actions/*/page.html + actions/_shared/intro.css)
 actions/**/info.html
+
+# Agent / CLI scratch (topics triage, dotnet-script probes)
+.tmp-reply-*
+_probe.csx
+_archive_probe.csx
+_get*.json
+_list.json
