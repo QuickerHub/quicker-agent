@@ -185,7 +185,7 @@ public sealed class ActionTopicsService
         password!,
         agentSettings,
         cancellationToken,
-        async (page, ct) => await ReadTopicDetailAsync(page, topicId, ct).ConfigureAwait(false));
+        async (page, ct) => await ReadTopicDetailAsync(page, topicId, ct, email, password).ConfigureAwait(false));
     }
 
     return RunReadOnlyAsync(
@@ -318,7 +318,14 @@ public sealed class ActionTopicsService
       cancellationToken,
       async (page, ct) =>
       {
-        var detail = await ReadTopicDetailAsync(page, topicId, ct).ConfigureAwait(false);
+        var detail = await ReadTopicDetailAsync(page, topicId, ct, email, password).ConfigureAwait(false);
+
+        if (!detail.CanArchive)
+        {
+          detail = await EnsureAuthorTopicDetailAsync(page, topicId, email, password, detail, ct)
+            .ConfigureAwait(false);
+        }
+
         var listUrl = string.IsNullOrWhiteSpace(detail.SharedActionId)
           ? null
           : GetQuickerActionTopicsPage.ExpandTopicsListUrl(detail.SharedActionId);
@@ -348,7 +355,13 @@ public sealed class ActionTopicsService
         }
 
         listUrl = GetQuickerActionTopicsPage.ExpandTopicsListUrl(detail.SharedActionId);
-        await NavigateAsync(page, listUrl, ct).ConfigureAwait(false);
+        if (!await _loginService
+              .NavigateWithLoginRetryAsync(page, listUrl, email, password, ct)
+              .ConfigureAwait(false))
+        {
+          return ActionTopicsOperationResult.Fail("LOGIN_FAILED", "Could not sign in to getquicker.net.");
+        }
+
         await page
           .WaitForSelectorAsync(GetQuickerActionTopicsPage.QuestionListSelector, new PageWaitForSelectorOptions
           {
@@ -389,51 +402,67 @@ public sealed class ActionTopicsService
       });
   }
 
-  private const string ArchiveViaAdminPostScript = """
-    async (topicId) => {
-      try {
-        const adminResp = await fetch(`/QA/adminquestion?id=${topicId}`, { credentials: 'same-origin' });
-        if (!adminResp.ok) return { ok: false, step: 'fetch-admin', status: adminResp.status };
-        const html = await adminResp.text();
-        const doc = new DOMParser().parseFromString(html, 'text/html');
-        const form = doc.querySelector('form[method="post"]');
-        const token = form?.querySelector('input[name="__RequestVerificationToken"]')?.value;
-        if (!token) return { ok: false, step: 'missing-token', hasForm: !!form };
-        const archiveBtn = [...form.querySelectorAll('button[formaction]')].find(btn => {
-          const label = (btn.textContent || '').replace(/\s+/g, '');
-          const action = btn.getAttribute('formaction') || '';
-          return label.includes('归档') || action.includes('Archive');
-        });
-        if (!archiveBtn) {
-          const labels = [...form.querySelectorAll('button[formaction]')].map(b => (b.textContent || '').trim());
-          return { ok: false, step: 'missing-archive-btn', labels };
-        }
-        const formaction = archiveBtn.getAttribute('formaction');
-        if (!formaction) return { ok: false, step: 'missing-formaction' };
-        const body = new URLSearchParams({ __RequestVerificationToken: token });
-        const postResp = await fetch(formaction, {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: body.toString(),
-        });
-        return { ok: postResp.ok, step: 'posted', status: postResp.status, formaction };
-      } catch (err) {
-        return { ok: false, step: 'exception', message: String(err) };
-      }
-    }
-    """;
-
   private static async Task<bool> TryArchiveViaAdminPostAsync(IPage page, int topicId, ILogger? logger = null)
   {
-    var result = await page.EvaluateAsync<JsonElement>(ArchiveViaAdminPostScript, topicId).ConfigureAwait(false);
-    var ok = result.TryGetProperty("ok", out var okEl) && okEl.ValueKind == JsonValueKind.True;
-    if (!ok)
+    var topicUrl = GetQuickerActionTopicsPage.ExpandViewTopicUrl(topicId);
+    if (!page.Url.Contains($"/ViewTopic/{topicId}", StringComparison.OrdinalIgnoreCase))
     {
-      logger?.LogWarning("Admin POST archive failed for topic {TopicId}: {Detail}", topicId, result.ToString());
+      await page.GotoAsync(topicUrl, new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded })
+        .ConfigureAwait(false);
     }
 
-    return ok;
+    var manageBtn = page.GetByRole(AriaRole.Button, new() { Name = "管理", Exact = true });
+    if (!await manageBtn.IsVisibleAsync().ConfigureAwait(false))
+    {
+      manageBtn = page.Locator("button, a").Filter(new LocatorFilterOptions { HasText = "管理" }).First;
+    }
+
+    if (await manageBtn.IsVisibleAsync().ConfigureAwait(false))
+    {
+      await manageBtn.ClickAsync().ConfigureAwait(false);
+      var frame = page.FrameLocator("#modalIFrame");
+      var archiveInFrame = frame
+        .Locator("button[formaction]")
+        .Filter(new LocatorFilterOptions { HasTextRegex = new Regex("归档") });
+
+      try
+      {
+        await archiveInFrame.First.WaitForAsync(new LocatorWaitForOptions { Timeout = 10_000 })
+          .ConfigureAwait(false);
+        await archiveInFrame.First.ClickAsync().ConfigureAwait(false);
+        await ConfirmArchiveDialogAsync(page).ConfigureAwait(false);
+        return true;
+      }
+      catch (TimeoutException)
+      {
+        logger?.LogWarning("Archive button not found in manage modal for topic {TopicId}", topicId);
+      }
+    }
+
+    var adminUrl = $"https://getquicker.net/QA/AdminQuestion?id={topicId}";
+    await page.GotoAsync(adminUrl, new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded })
+      .ConfigureAwait(false);
+
+    if (page.Url.Contains("/Errors/404", StringComparison.OrdinalIgnoreCase)
+        || (await page.TitleAsync().ConfigureAwait(false)).Contains("404", StringComparison.Ordinal))
+    {
+      logger?.LogWarning("Admin archive page 404 for topic {TopicId}", topicId);
+      return false;
+    }
+
+    var archiveBtn = page
+      .Locator("button[formaction]")
+      .Filter(new LocatorFilterOptions { HasTextRegex = new Regex("归档") });
+
+    if (!await archiveBtn.First.IsVisibleAsync().ConfigureAwait(false))
+    {
+      logger?.LogWarning("Admin archive button not found for topic {TopicId}", topicId);
+      return false;
+    }
+
+    await archiveBtn.First.ClickAsync().ConfigureAwait(false);
+    await ConfirmArchiveDialogAsync(page).ConfigureAwait(false);
+    return true;
   }
 
   private static async Task<bool> ClickArchiveOnViewTopicAsync(IPage page, CancellationToken cancellationToken)
@@ -825,13 +854,81 @@ public sealed class ActionTopicsService
       ? value.GetString()
       : null;
 
-  private async Task<ActionTopicDetail> ReadTopicDetailAsync(IPage page, int topicId, CancellationToken cancellationToken)
+  private async Task<ActionTopicDetail> EnsureAuthorTopicDetailAsync(
+    IPage page,
+    int topicId,
+    string email,
+    string password,
+    ActionTopicDetail current,
+    CancellationToken cancellationToken)
+  {
+    if (current.CanArchive || await HasManageControlAsync(page).ConfigureAwait(false))
+    {
+      return current;
+    }
+
+    _logger.LogInformation(
+      "Author controls not visible for topic {TopicId}; re-authenticating and reloading.",
+      topicId);
+
+    var loggedIn = await _loginService.LoginAsync(page, email, password, cancellationToken).ConfigureAwait(false);
+    if (!loggedIn)
+    {
+      return current;
+    }
+
+    return await ReadTopicDetailAsync(page, topicId, cancellationToken, email, password).ConfigureAwait(false);
+  }
+
+  private static async Task<bool> HasManageControlAsync(IPage page)
+  {
+    var manageBtn = page.GetByRole(AriaRole.Button, new() { Name = "管理", Exact = true });
+    if (await manageBtn.IsVisibleAsync().ConfigureAwait(false))
+    {
+      return true;
+    }
+
+    manageBtn = page.Locator("button, a").Filter(new LocatorFilterOptions { HasText = "管理" }).First;
+    return await manageBtn.IsVisibleAsync().ConfigureAwait(false);
+  }
+
+  private async Task<ActionTopicDetail> ReadTopicDetailAsync(
+    IPage page,
+    int topicId,
+    CancellationToken cancellationToken,
+    string? email = null,
+    string? password = null)
   {
     _ = cancellationToken;
     var url = GetQuickerActionTopicsPage.ExpandViewTopicUrl(topicId);
     if (!page.Url.Contains($"/ViewTopic/{topicId}", StringComparison.OrdinalIgnoreCase))
     {
-      await NavigateAsync(page, url, cancellationToken).ConfigureAwait(false);
+      if (!string.IsNullOrWhiteSpace(email) && !string.IsNullOrWhiteSpace(password))
+      {
+        var opened = await _loginService
+          .NavigateWithLoginRetryAsync(page, url, email, password, cancellationToken)
+          .ConfigureAwait(false);
+        if (!opened)
+        {
+          throw new InvalidOperationException("Could not sign in to getquicker.net.");
+        }
+      }
+      else
+      {
+        await NavigateAsync(page, url, cancellationToken).ConfigureAwait(false);
+      }
+    }
+    else if (!string.IsNullOrWhiteSpace(email)
+             && !string.IsNullOrWhiteSpace(password)
+             && await _loginService.IsLoginPageAsync(page).ConfigureAwait(false))
+    {
+      var opened = await _loginService
+        .NavigateWithLoginRetryAsync(page, url, email, password, cancellationToken)
+        .ConfigureAwait(false);
+      if (!opened)
+      {
+        throw new InvalidOperationException("Could not sign in to getquicker.net.");
+      }
     }
 
     if (page.Url.Contains("/Errors/404", StringComparison.OrdinalIgnoreCase))
@@ -927,28 +1024,11 @@ public sealed class ActionTopicsService
       .ConfigureAwait(false);
   }
 
-  private async Task<bool> OpenPageAsync(
+  private Task<bool> OpenPageAsync(
     IPage page,
     string url,
     string email,
     string password,
-    CancellationToken cancellationToken)
-  {
-    await NavigateAsync(page, url, cancellationToken).ConfigureAwait(false);
-
-    if (!await _loginService.IsLoginPageAsync(page).ConfigureAwait(false))
-    {
-      return true;
-    }
-
-    _logger.LogInformation("Redirected to login; signing in again...");
-    var loggedIn = await _loginService.LoginAsync(page, email, password, cancellationToken).ConfigureAwait(false);
-    if (!loggedIn)
-    {
-      return false;
-    }
-
-    await NavigateAsync(page, url, cancellationToken).ConfigureAwait(false);
-    return !await _loginService.IsLoginPageAsync(page).ConfigureAwait(false);
-  }
+    CancellationToken cancellationToken) =>
+    _loginService.NavigateWithLoginRetryAsync(page, url, email, password, cancellationToken);
 }

@@ -75,7 +75,23 @@ public sealed class QuickerBrowserSession : IAsyncDisposable
     {
       throw new InvalidOperationException("Quicker login did not complete.");
     }
+
+    if (!await _loginService.IsLoggedInAsync(page, cancellationToken).ConfigureAwait(false))
+    {
+      throw new InvalidOperationException("Quicker login finished but member session could not be verified.");
+    }
   }
+
+  /// <summary>
+  /// Opens <paramref name="url"/> and re-authenticates when the site redirects to login.
+  /// </summary>
+  public Task<bool> NavigateWithLoginRetryAsync(
+    IPage page,
+    string url,
+    string email,
+    string password,
+    CancellationToken cancellationToken = default) =>
+    _loginService.NavigateWithLoginRetryAsync(page, url, email, password, cancellationToken);
 
   public async ValueTask DisposeAsync()
   {
