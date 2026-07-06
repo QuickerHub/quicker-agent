@@ -334,7 +334,7 @@ public sealed class ActionTopicsService
           return ActionTopicsOperationResult.Success(topicId, listUrl ?? page.Url);
         }
 
-        if (await TryArchiveViaAdminPostAsync(page, topicId).ConfigureAwait(false))
+        if (await TryArchiveViaAdminPostAsync(page, topicId, _logger).ConfigureAwait(false))
         {
           _logger.LogInformation("Archived action topic {TopicId} via admin POST", topicId);
           return ActionTopicsOperationResult.Success(topicId, listUrl ?? page.Url);
@@ -391,34 +391,50 @@ public sealed class ActionTopicsService
 
   private const string ArchiveViaAdminPostScript = """
     async (topicId) => {
-      const adminResp = await fetch(`/QA/adminquestion?id=${topicId}`, { credentials: 'same-origin' });
-      if (!adminResp.ok) return false;
-      const html = await adminResp.text();
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      const form = doc.querySelector('form[method="post"]');
-      const token = form?.querySelector('input[name="__RequestVerificationToken"]')?.value;
-      if (!token) return false;
-      const archiveBtn = [...form.querySelectorAll('button[formaction]')].find(btn => {
-        const label = (btn.textContent || '').replace(/\s+/g, '');
-        const action = btn.getAttribute('formaction') || '';
-        return label.includes('归档') || action.includes('Archive');
-      });
-      if (!archiveBtn) return false;
-      const formaction = archiveBtn.getAttribute('formaction');
-      if (!formaction) return false;
-      const body = new URLSearchParams({ __RequestVerificationToken: token });
-      const postResp = await fetch(formaction, {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: body.toString(),
-      });
-      return postResp.ok;
+      try {
+        const adminResp = await fetch(`/QA/adminquestion?id=${topicId}`, { credentials: 'same-origin' });
+        if (!adminResp.ok) return { ok: false, step: 'fetch-admin', status: adminResp.status };
+        const html = await adminResp.text();
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const form = doc.querySelector('form[method="post"]');
+        const token = form?.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        if (!token) return { ok: false, step: 'missing-token', hasForm: !!form };
+        const archiveBtn = [...form.querySelectorAll('button[formaction]')].find(btn => {
+          const label = (btn.textContent || '').replace(/\s+/g, '');
+          const action = btn.getAttribute('formaction') || '';
+          return label.includes('归档') || action.includes('Archive');
+        });
+        if (!archiveBtn) {
+          const labels = [...form.querySelectorAll('button[formaction]')].map(b => (b.textContent || '').trim());
+          return { ok: false, step: 'missing-archive-btn', labels };
+        }
+        const formaction = archiveBtn.getAttribute('formaction');
+        if (!formaction) return { ok: false, step: 'missing-formaction' };
+        const body = new URLSearchParams({ __RequestVerificationToken: token });
+        const postResp = await fetch(formaction, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: body.toString(),
+        });
+        return { ok: postResp.ok, step: 'posted', status: postResp.status, formaction };
+      } catch (err) {
+        return { ok: false, step: 'exception', message: String(err) };
+      }
     }
     """;
 
-  private static Task<bool> TryArchiveViaAdminPostAsync(IPage page, int topicId) =>
-    page.EvaluateAsync<bool>(ArchiveViaAdminPostScript, topicId);
+  private static async Task<bool> TryArchiveViaAdminPostAsync(IPage page, int topicId, ILogger? logger = null)
+  {
+    var result = await page.EvaluateAsync<JsonElement>(ArchiveViaAdminPostScript, topicId).ConfigureAwait(false);
+    var ok = result.TryGetProperty("ok", out var okEl) && okEl.ValueKind == JsonValueKind.True;
+    if (!ok)
+    {
+      logger?.LogWarning("Admin POST archive failed for topic {TopicId}: {Detail}", topicId, result.ToString());
+    }
+
+    return ok;
+  }
 
   private static async Task<bool> ClickArchiveOnViewTopicAsync(IPage page, CancellationToken cancellationToken)
   {
