@@ -10,28 +10,77 @@
 
   <header class="qk-hero">
     <h1>剪贴板 <span class="qk-accent">n10</span></h1>
-    <p class="qk-summary">基于 IntelliTools / ClipHost 的 .NET 10 重构预览版，保留剪贴板核心能力，并持续优化唤出定位、键盘操作、全局快捷键与设置体验。</p>
+    <p class="qk-summary">
+      基于 IntelliTools / ClipHost 的 .NET 10 重构预览版。除完整剪贴板历史、收藏与超级面板外，新增<strong>便捷粘贴</strong>、<strong>复制成功提示</strong>、<strong>IM 富文本</strong>与全新 ClipHost 主窗口；支持 Quicker V1/V2 双宿主，持续优化无焦点键盘操作与全局快捷键。
+    </p>
   </header>
 
   <section class="qk-section">
-    <h2>当前版本重点</h2>
+    <h2>当前版本重点（v0.30）</h2>
     <ul>
-      <li><strong>窗口位置可配置</strong>：可在设置中选择相对光标、屏幕中心等显示位置，适配不同使用习惯</li>
-      <li><strong>唤起定位更稳</strong>：优化前台光标探测与窗口定位逻辑，减少面板出现在意外位置的情况</li>
-      <li><strong>底栏更清爽</strong>：剪贴板页底栏「添加 / 清空 / 设置」改为图标按钮，分类标签与标题栏导航更紧凑</li>
-      <li><strong>全局快捷键</strong>：ClipHost 可在后台注册快捷键，也支持 Win+V 风格唤起（以本机设置和系统占用情况为准）</li>
-      <li><strong>软件信息</strong>：文档页可查看当前运行环境与组件版本，便于排查 ClipHost / 运行时问题</li>
+      <li><strong>便捷粘贴</strong>：按住 <kbd>Alt</kbd>+<kbd>`</kbd> 弹出最近记录预览，连按 <kbd>`</kbd> 切换条目，松开 <kbd>Alt</kbd> 粘贴；支持滚轮/方向键导航、会话内 <kbd>1</kbd>/<kbd>2</kbd> 行操作、<kbd>D</kbd> 删除、选中项短时记忆、<kbd>Esc</kbd> 取消</li>
+      <li><strong>统一预览浮层</strong>：便捷粘贴列表与详情合并为单面板，靠近光标锚定，贴屏幕边缘时自动收敛</li>
+      <li><strong>复制成功 Toast</strong>：复制后按内容类型展示透明浮层预览，多显示器适配，不阻挡操作</li>
+      <li><strong>IM 富文本</strong>：支持 QQ / 微信 / 企业微信等富文本剪贴板，列表可预览，编辑区所见即所得，图片可持久化</li>
+      <li><strong>ClipHost 主窗口</strong>：首页、剪贴板、个性化、触发、帮助、数据管理统一侧栏；标题栏居中搜索设置项</li>
+      <li><strong>数据安全</strong>：清空剪贴板历史前确认，约 8 秒内可撤销，避免误删</li>
     </ul>
   </section>
 
   <section class="qk-section">
-    <h2>核心能力</h2>
+    <h2>便捷粘贴</h2>
+    <p>无需打开完整剪贴板窗口，即可快速预览并粘贴最近记录（默认快捷键 <kbd>Alt</kbd>+<kbd>`</kbd>，可在设置中修改或禁用）。</p>
     <ul>
-      <li><strong>类 Win+V 体验</strong>：唤出面板时尽量不抢占当前窗口焦点，边浏览边选择粘贴更顺手</li>
-      <li><strong>方向键导航</strong>：列表内可用方向键快速移动、选中条目，按 <kbd>Enter</kbd> 执行</li>
-      <li><strong>快速搜索</strong>：按 <kbd>F</kbd> 聚焦搜索框，在海量记录里迅速定位</li>
-      <li><strong>收藏联动</strong>：与捷径面板 n10 共用 ClipHost 本地服务，可复用收藏、面板与本地接口能力</li>
-      <li><strong>持续更新</strong>：ClipHost 本地服务、网络子程序兼容、启动路径对齐等能力会在测试版中优先迭代</li>
+      <li><strong>唤起与切换</strong>：按住 <kbd>Alt</kbd> 再按 <kbd>`</kbd> 打开；保持 <kbd>Alt</kbd> 按住时连按 <kbd>`</kbd> 在条目间切换</li>
+      <li><strong>导航</strong>：滚轮或 <kbd>↑</kbd>/<kbd>↓</kbd> 切换选中项；置顶条目以金色序号显示在列表末尾</li>
+      <li><strong>行内操作</strong>：<kbd>Alt</kbd>+<kbd>1</kbd> / <kbd>Alt</kbd>+<kbd>2</kbd> 可武装「模拟输入」或「打开链接/路径」等操作，松开 <kbd>Alt</kbd> 执行</li>
+      <li><strong>删除</strong>：<kbd>Alt</kbd>+<kbd>D</kbd> 删除当前选中项（从剪贴板历史中移除，不粘贴）</li>
+      <li><strong>取消</strong>：<kbd>Esc</kbd> 关闭浮层且不粘贴（含 <kbd>Alt</kbd>+<kbd>Esc</kbd>，由 hook 拦截，避免误关前台窗口）</li>
+      <li><strong>配置</strong>：ClipHost 主窗口 <strong>设置 → 便捷粘贴</strong>（独立页）：全局快捷键、非置顶条数上限、<kbd>Alt</kbd>+<kbd>1</kbd>/<kbd>2</kbd> 行操作绑定、<kbd>Alt</kbd>+<kbd>D</kbd> 删除开关、记住上次选中项（默认 10 秒，0 为关闭）</li>
+    </ul>
+    <p class="qk-footnote">右键动作按钮 →「连续粘贴」可进入连续粘贴模式（与便捷粘贴不同，适合批量插入）。</p>
+  </section>
+
+  <section class="qk-section">
+    <h2>剪贴板面板</h2>
+    <ul>
+      <li><strong>类 Win+V 体验</strong>：唤出时尽量不抢占前台焦点；可开关「无焦点模式」（关闭后会激活并聚焦搜索框）</li>
+      <li><strong>全局唤起</strong>：默认 <kbd>Ctrl</kbd>+<kbd>`</kbd> 为<strong>点按切换</strong>显示/隐藏，按完即松开，不要按住 <kbd>Ctrl</kbd> 当引导键</li>
+      <li><strong>键盘导航</strong>：方向键移动选中，<kbd>Enter</kbd> 粘贴；<kbd>Delete</kbd> 删除当前项；按 <kbd>F</kbd> 聚焦搜索框</li>
+      <li><strong>CapsLock 扩展热键</strong>（无焦点模式，与 Quicker 引导键同布局）：<kbd>CapsLock</kbd>+<kbd>I</kbd>/<kbd>J</kbd>/<kbd>K</kbd>/<kbd>L</kbd> 上下左右，<kbd>O</kbd> 退格搜索，<kbd>Q</kbd> 关闭</li>
+      <li><strong>极简列表</strong>：可选极简显示模式，图片预览高度可单独配置</li>
+      <li><strong>多选与合并</strong>：<kbd>Ctrl</kbd> / <kbd>Shift</kbd> 多选后可合并粘贴或批量操作（窗口有焦点时）</li>
+      <li><strong>图片与路径</strong>：本地图片路径、多文件中的图片文件可显示缩略预览；列表尺寸标签布局已优化</li>
+      <li><strong>内联链接</strong>：文本中的链接悬停可快速打开</li>
+      <li><strong>黑名单</strong>：可配置前台进程黑名单，指定应用复制时不收录</li>
+    </ul>
+    <p class="qk-footnote">
+      <strong>关于 Alt 与 Ctrl：</strong>便捷粘贴默认用 <kbd>Alt</kbd>+<kbd>`</kbd>，全程按住 <kbd>Alt</kbd> 切换/粘贴很自然。
+      剪贴板窗口的 <kbd>Ctrl</kbd>+<kbd>`</kbd> 只适合点按唤起；<kbd>Ctrl</kbd> 作引导键按字母（如 <kbd>Ctrl</kbd>+<kbd>W</kbd>）既别扭，也容易撞上编辑器/浏览器快捷键，无焦点模式下 ClipHost 也不会拦截这类组合。
+      若希望「按住引导键 + 字母」操作列表，请用 <kbd>CapsLock</kbd> 引导，或 Quicker 以 <kbd>Alt</kbd> 为引导键唤出动作后再操作。
+    </p>
+  </section>
+
+  <section class="qk-section">
+    <h2>收藏与扩展</h2>
+    <ul>
+      <li><strong>收藏夹</strong>：常用片段固定；支持文本、链接、路径、Quicker 动作等；可在窗口内直接编辑多类型条目</li>
+      <li><strong>捷径面板 n10</strong>：与剪贴板共用 ClipHost 本地服务，收藏结构同步，超级面板快速唤出</li>
+      <li><strong>超级菜单</strong>：ClipHost 首页可打开文件、窗口、文本、收藏、书签等超级菜单</li>
+      <li><strong>窗口位置</strong>：剪贴板与面板均可配置相对光标、屏幕中心等显示位置</li>
+      <li><strong>全局快捷键</strong>：剪贴板显示/隐藏、收藏面板、便捷粘贴、Win+V 风格唤起等可在设置中配置（留空即禁用）</li>
+    </ul>
+    <p class="qk-footnote">收藏云同步功能暂时下架，恢复后将在 ClipHost 主窗口提供入口。</p>
+  </section>
+
+  <section class="qk-section">
+    <h2>ClipHost 本地服务</h2>
+    <ul>
+      <li><strong>后台常驻</strong>：剪贴板监听、全局快捷键、便捷粘贴与 Toast 由 ClipHost 提供，Quicker 插件负责启动与桥接</li>
+      <li><strong>双宿主插件</strong>：同时提供 net472（Quicker V1）与 net10（Quicker V2）依赖包，按环境自动选用</li>
+      <li><strong>软件信息</strong>：帮助 / 文档页可查看 ClipHost、运行时与组件版本，便于排查问题</li>
+      <li><strong>.NET 10 引导</strong>：未安装运行时时，面板内可打开安装引导并检测两项必需运行时</li>
+      <li><strong>独立安装包</strong>：除 Quicker 插件外，也可使用 ClipHost setup.exe 或便携 zip 独立部署</li>
     </ul>
   </section>
 
@@ -39,9 +88,9 @@
     <h2>安装与要求</h2>
     <ul>
       <li>最低 Quicker 版本：<strong>1.39.0</strong>，建议使用 <strong>1.45.0</strong> 及以上</li>
-      <li>安装后可在面板中触发；建议与稳定版二选一，避免同时常驻冲突</li>
-      <li>若需开机自启，请在 Quicker「自动运行」中加入本动作</li>
-      <li>如果使用独立 ClipHost 安装包或开发版路径，IntelliTools 会优先尝试直接启动配置的 ClipHost，不再依赖复制到安装目录后再运行</li>
+      <li>Windows 10 及以上；建议与稳定版剪贴板<strong>二选一</strong>常驻，避免冲突</li>
+      <li>安装后触发动作即可使用；开机自启请将本动作加入 Quicker「自动运行」</li>
+      <li>IntelliTools 优先直接启动配置路径或插件包内的 ClipHost，减少升级时的文件占用问题</li>
     </ul>
     <div class="qk-callout">
       <a href="quicker:settings:AutoRunActions">打开「自动运行」设置</a>
@@ -103,17 +152,17 @@
   <section class="qk-section">
     <h2>使用提示</h2>
     <ul>
-      <li>再次触发动作可关闭面板（适合绑定快捷键）</li>
-      <li>在设置中调整窗口位置、Win+V 风格快捷键、外观与其它行为选项</li>
+      <li>再次触发动作可关闭剪贴板面板（适合绑定快捷键）</li>
+      <li>右键动作按钮可打开设置、连续粘贴、暂停/恢复监听、正常或强制退出 ClipHost</li>
+      <li>文本指令除 <code>vv</code> + Tab 外，支持连按三次 <code>v</code> 打开剪贴板窗口</li>
       <li>遇到问题可先查看动作页「讨论」区，或到 QQ 群反馈</li>
-      <li>右键动作按钮 → 设置，可调整界面与行为（与稳定版类似）</li>
-      <li>面板内可通过相关入口打开 .NET 10 安装引导（检测是否已安装上述运行时）</li>
     </ul>
   </section>
 
   <section class="qk-section">
     <h2>相关链接</h2>
     <div class="qk-links">
+      <a class="qk-chip" href="https://getquicker.net/Sharedaction?code=7aa833ad-3715-4342-8374-08debcceae79">捷径面板 n10</a>
       <a class="qk-chip" href="https://dotnet.microsoft.com/en-us/download/dotnet/10.0">.NET 10 下载汇总</a>
       <a class="qk-chip" href="https://getquicker.net/Sharedaction?code=9ec53d43-5539-4571-6886-08d8c752bfcb">稳定版「剪贴板」</a>
       <a class="qk-chip" href="https://www.wolai.com/8eizYvWmhibh2dChMY72aW">详细使用文档</a>
