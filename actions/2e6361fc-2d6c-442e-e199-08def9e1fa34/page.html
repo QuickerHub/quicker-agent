@@ -1,0 +1,63 @@
+<div class="qk-doc">
+  <header class="qk-hero">
+    <h1>超级菜单 <span class="qk-accent">Rust 版</span></h1>
+    <p class="qk-summary">把常用收藏、文件路径和窗口操作放到随手可开的菜单中。默认打开以收藏为主的菜单，并按设置显示窗口管理、浏览器书签等入口。</p>
+    <p class="qk-footnote">动作沿用「超级菜单 n10」名称，当前使用 Rust + GPUI 原生界面，与「剪贴板 n10」共用 ClipHost 程序、设置和数据。</p>
+  </header>
+
+  <section class="qk-section">
+    <h2>安装与开始使用</h2>
+    <ol>
+      <li>将本动作添加到 Quicker 面板，点击运行。首次运行会下载并安装所需组件，请保持网络连接并等待完成。</li>
+      <li>在菜单中展开收藏目录，选择需要的内容。可为本动作绑定常用快捷键，方便随时唤起。</li>
+      <li>右键点击 Quicker 面板上的动作，选择「设置」，进入「超级菜单」调整显示内容、菜单位置和外观。</li>
+    </ol>
+    <p>Windows 10 / 11；Quicker V1 / V2 使用各自的启动依赖。安装入口按 Windows 系统架构选择 x64 或 ARM64 宿主，GPUI 界面无需 WebView2，也无需为 ClipHost 单独安装 .NET 10 运行时。</p>
+  </section>
+
+  <section class="qk-section">
+    <h2>菜单能做什么</h2>
+    <ul>
+      <li><strong>收藏菜单：</strong>按目录浏览常用内容，方便快速选取和重复使用；菜单内容来自自己的收藏。</li>
+      <li><strong>文件菜单：</strong>维护常用文件和目录列表，展开浏览文件夹；在资源管理器或支持的「打开 / 另存为」窗口中定位目录。文件菜单的路径列表在设置中单独维护。</li>
+      <li><strong>窗口菜单：</strong>查看和切换窗口，使用置顶、最小化、关闭等窗口操作。</li>
+      <li><strong>其它入口：</strong>可通过动作参数直接打开文本、浏览器书签或剪贴板菜单。</li>
+    </ul>
+    <p class="qk-footnote">菜单显示在「设置 → 超级菜单」调整；ClipHost 自身的全局快捷键在「设置 → 触发」中修改。</p>
+  </section>
+
+  <section class="qk-section">
+    <h2>用动作参数直接打开指定菜单</h2>
+    <p>本动作不带参数时执行 <code>menu favor</code>。通过 Quicker 快捷键或其它动作调用时，可将下列命令作为运行参数传入：</p>
+    <table>
+      <thead><tr><th>打开内容</th><th>动作参数</th></tr></thead>
+      <tbody>
+        <tr><td>收藏菜单（默认）</td><td><code>menu favor</code></td></tr>
+        <tr><td>文件菜单</td><td><code>menu file</code></td></tr>
+        <tr><td>窗口菜单</td><td><code>menu window</code></td></tr>
+        <tr><td>文本菜单</td><td><code>menu text</code></td></tr>
+        <tr><td>浏览器书签菜单</td><td><code>menu bookmarks</code></td></tr>
+        <tr><td>剪贴板菜单</td><td><code>menu clipboard</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="qk-section">
+    <h2>更新与手动下载</h2>
+    <p>当前公开动作已同步 Rust / GPUI <strong>0.31.15</strong>。更新 Quicker 中的动作后，再次运行即可检查所需组件；升级继续沿用已选择的数据目录。已经使用 Rust 版「剪贴板 n10」时，两项动作会复用同一个 ClipHost。</p>
+    <p>日常使用优先由动作完成安装。需要独立运行或手动下载时，可在
+      <a href="https://github.com/ceastld/eaclip/releases">ClipHost 发布页</a>选择与 Windows 架构对应的便携 ZIP，完整解压后运行 <code>cliphost-app.exe</code>，保留同目录的 DLL 和资源。</p>
+    <p class="qk-footnote">收藏菜单为空时，先确认已添加收藏内容；窗口管理、书签等附加入口可在「超级菜单」设置中开启。首次下载失败时，确认网络可用后重新运行动作。</p>
+  </section>
+
+  <section class="qk-section">
+    <h2>交流与反馈</h2>
+    <p class="qk-feedback">剪贴板动作 QQ 群：<span class="qk-qq">824753837</span></p>
+    <p>遇到问题时，请提供 Quicker 版本、ClipHost 版本、Windows 架构、使用的动作参数和复现步骤。可在本动作讨论区交流，或到统一反馈仓库提交问题与功能建议。</p>
+    <div class="qk-links">
+      <a class="qk-chip" href="https://getquicker.net/Sharedaction?code=df6cc8fc-1a67-4576-fcb0-08deace01986">剪贴板 n10 · Rust 版</a>
+      <a class="qk-chip" href="https://github.com/ceastld/eaclip/releases">版本说明与下载</a>
+      <a class="qk-chip" href="https://github.com/QuickerHub/cea-action-issues/issues">问题反馈与功能建议</a>
+    </div>
+  </section>
+</div>
