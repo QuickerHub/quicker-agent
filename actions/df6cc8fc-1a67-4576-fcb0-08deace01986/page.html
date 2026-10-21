@@ -60,7 +60,8 @@
       <li><strong>动作右键菜单：</strong>可进入设置、连续粘贴、暂停 / 恢复监听和退出程序。</li>
       <li><strong>连续粘贴：</strong>适合将多条记录依次插入，与便捷粘贴的快速选取用途不同。</li>
       <li><strong>局域网互传：</strong>点击底栏互传按钮，在剪贴板右侧打开会话；点击左侧历史记录或将记录拖入右栏，即可发送给当前选中的已配对设备。输入区按 <kbd>Enter</kbd> 发送，按 <kbd>Shift</kbd>+<kbd>Enter</kbd> 换行。</li>
-      <li><strong>Windows 设备同步：</strong>在「局域网 → 设备与连接」为已配对电脑单独开启文本、静态图片同步，并分别设置是否保存到历史、是否替换当前剪贴板。同步初始关闭；文件继续手动互传。</li>
+      <li><strong>Windows 设备同步：</strong>在「设置 → 设备同步」用一个总开关控制，初始开启；文本、图片分别可选，已配对电脑直接双向同步，收到后保存到历史并写入当前剪贴板。旧的暂停状态保留；文件继续手动互传。</li>
+      <li><strong>同图判重：</strong>像素完全相同、仅 PNG 编码或标准附加信息不同的图片复用一个条目，不触发同步回传；图片内容变化时保留新内容。</li>
     </ul>
   </section>
 
@@ -77,7 +78,7 @@
     <p>ClipHost 可以独立运行。使用 Quicker 动作时优先让动作自动下载；独立使用时可在
       <a href="https://github.com/ceastld/eaclip/releases">ClipHost 发布页</a>选择与 Windows 架构对应的 x64 或 ARM64 便携 ZIP，
       解压完整目录后运行 <code>cliphost-app.exe</code>，保留同目录的运行库和资源。当前 Rust 发布提供便携包。</p>
-    <p class="qk-footnote">本次宿主为 <code>0.31.24.0</code>，Quicker V1/V2 入口为 <code>0.31.24.1</code>。<a href="https://github.com/ceastld/eaclip/releases/tag/rust-v0.31.24">查看 0.31.24 更新说明</a>。</p>
+    <p class="qk-footnote">本次宿主为 <code>0.31.26.0</code>，Quicker V1/V2 入口为 <code>0.31.24.1</code>。<a href="https://github.com/ceastld/eaclip/releases/tag/rust-v0.31.26">查看 0.31.26 更新说明</a>。</p>
   </section>
 
   <section class="qk-section">
