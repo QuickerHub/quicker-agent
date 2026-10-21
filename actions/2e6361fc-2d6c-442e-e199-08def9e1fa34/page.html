@@ -27,7 +27,7 @@
   </section>
 
   <section class="qk-section">
-    <h2>用动作参数直接打开指定菜单</h2>
+    <h2>用动作参数打开菜单或聚合搜索</h2>
     <p>本动作不带参数时执行 <code>menu favor</code>。通过 Quicker 快捷键或其它动作调用时，可将下列命令作为运行参数传入：</p>
     <table>
       <thead><tr><th>打开内容</th><th>动作参数</th></tr></thead>
@@ -38,8 +38,10 @@
         <tr><td>文本菜单</td><td><code>menu text</code></td></tr>
         <tr><td>浏览器书签菜单</td><td><code>menu bookmarks</code></td></tr>
         <tr><td>剪贴板菜单</td><td><code>menu clipboard</code></td></tr>
+        <tr><td>CeaBox 聚合搜索窗口</td><td><code>search show</code></td></tr>
       </tbody>
     </table>
+    <p class="qk-footnote"><code>search show</code> 打开独立搜索窗口，按关键词或拼音查找收藏、剪贴板历史和已安装的 Quicker 动作。动作搜索需要 Quicker 连接。</p>
   </section>
 
   <section class="qk-section">
@@ -47,6 +49,7 @@
     <p>本动作使用 Rust / GPUI ClipHost。更新 Quicker 中的动作后，再次运行即可检查所需组件；本版继续沿用已选择的数据目录和原有存储格式，不自动转换为新格式或移动用户数据。已经使用 Rust 版「剪贴板 n10」时，两项动作会复用同一个 ClipHost。</p>
     <p>日常使用优先由动作完成安装。需要独立运行或手动下载时，可在
       <a href="https://github.com/ceastld/eaclip/releases">ClipHost 发布页</a>选择与 Windows 架构对应的便携 ZIP，完整解压后运行 <code>cliphost-app.exe</code>，保留同目录的 DLL 和资源。</p>
+    <p class="qk-footnote">本次宿主为 <code>0.31.24.0</code>，Quicker V1/V2 入口为 <code>0.31.24.1</code>。<a href="https://github.com/ceastld/eaclip/releases/tag/rust-v0.31.24">查看 0.31.24 更新说明</a>。</p>
     <p class="qk-footnote">收藏菜单为空时，先确认已添加收藏内容；窗口管理、书签等附加入口可在「超级菜单」设置中开启。首次下载失败时，确认网络可用后重新运行动作。</p>
   </section>
 
