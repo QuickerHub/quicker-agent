@@ -12,7 +12,7 @@
       <li>在菜单中展开收藏目录，选择需要的内容；屏幕顶部居中的分类栏可切换窗口、文件、收藏、书签、文本和剪贴板。可为本动作绑定常用快捷键，方便随时唤起。</li>
       <li>右键点击 Quicker 面板上的动作，选择「设置」，进入「超级菜单」调整显示内容、菜单位置和外观；页内标签可定位对应分区，文件菜单和文本操作也在同一设置页中管理。</li>
     </ol>
-    <p>Windows 10 / 11；Quicker V1 / V2 使用各自的启动依赖。安装入口按 Windows 系统架构选择 x64 或 ARM64 宿主，GPUI 界面无需 WebView2，也无需为 ClipHost 单独安装 .NET 10 运行时。</p>
+    <p>Windows 10 / 11；Quicker V1 / V2 使用各自的启动依赖。本版安装入口统一使用 x64 宿主，GPUI 界面无需 WebView2，也无需为 ClipHost 单独安装 .NET 10 运行时。</p>
   </section>
 
   <section class="qk-section">
@@ -20,7 +20,7 @@
     <ul>
       <li><strong>收藏菜单：</strong>按目录浏览常用内容，方便快速选取和重复使用；菜单内容来自自己的收藏。</li>
       <li><strong>文件菜单：</strong>维护常用文件和目录列表，展开浏览文件夹；在资源管理器或支持的「打开 / 另存为」窗口中定位目录。文件菜单的路径列表在设置中单独维护。</li>
-      <li><strong>窗口菜单：</strong>查看和切换窗口，使用置顶、最小化、关闭等窗口操作。</li>
+      <li><strong>窗口菜单：</strong>使用普通窗口列表；悬停或单击查看并复制标题、句柄、类名、进程路径和位置。右键打开置顶、最小化、关闭等管理操作，激活窗口使用独立命令。</li>
       <li><strong>其它入口：</strong>可通过动作参数直接打开文本、浏览器书签或剪贴板菜单。</li>
     </ul>
     <p class="qk-footnote">菜单显示在「设置 → 超级菜单」调整；ClipHost 自身的全局快捷键在「设置 → 触发」中修改。</p>
@@ -48,8 +48,8 @@
     <h2>更新与手动下载</h2>
     <p>本动作使用 Rust / GPUI ClipHost。更新 Quicker 中的动作后，再次运行即可检查所需组件；本版继续沿用已选择的数据目录和原有存储格式，不自动转换为新格式或移动用户数据。已经使用 Rust 版「剪贴板 n10」时，两项动作会复用同一个 ClipHost。</p>
     <p>日常使用优先由动作完成安装。需要独立运行或手动下载时，可在
-      <a href="https://github.com/ceastld/eaclip/releases">ClipHost 发布页</a>选择与 Windows 架构对应的便携 ZIP，完整解压后运行 <code>cliphost-app.exe</code>，保留同目录的 DLL 和资源。</p>
-    <p class="qk-footnote">本次宿主为 <code>0.31.26.0</code>，Quicker V1/V2 入口为 <code>0.31.24.1</code>。<a href="https://github.com/ceastld/eaclip/releases/tag/rust-v0.31.26">查看 0.31.26 更新说明</a>。</p>
+      <a href="https://github.com/ceastld/eaclip/releases">ClipHost 发布页</a>下载 Windows x64 便携 ZIP，完整解压后运行 <code>cliphost-app.exe</code>，保留同目录的 DLL 和资源。</p>
+    <p class="qk-footnote">本次宿主为 <code>0.31.28.0</code>，Quicker V1/V2 入口为 <code>0.31.27.1</code>。<a href="https://github.com/ceastld/eaclip/releases/tag/rust-v0.31.28">查看 0.31.28 更新说明</a>。</p>
     <p class="qk-footnote">收藏菜单为空时，先确认已添加收藏内容；窗口管理、书签等附加入口可在「超级菜单」设置中开启。首次下载失败时，确认网络可用后重新运行动作。</p>
   </section>
 
