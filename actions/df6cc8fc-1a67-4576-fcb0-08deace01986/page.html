@@ -29,10 +29,16 @@
       <li><strong>历史记录：</strong>保存文本、图片、文件及富文本内容，支持搜索、来源筛选和分类。</li>
       <li><strong>临时图片：</strong>截图软件等已知临时位置的单个图片文件会保全到数据目录，便于源文件回收后继续使用；普通文件和多文件记录继续保留原引用。</li>
       <li><strong>失效文件记录：</strong>仅在展示时检查。普通未置顶记录全部文件失效后，首次发现满 24 小时、再次展示并确认仍全部失效时才清理记录；收藏和外部文件保留。</li>
+      <li><strong>列表快捷键：</strong>用 <kbd>Ctrl</kbd>+<kbd>A</kbd> 全选当前已加载的历史结果，<kbd>Ctrl</kbd>+<kbd>C</kbd> 复制，<kbd>Ctrl</kbd>+<kbd>P</kbd> 切换置顶；多选后按 <kbd>Enter</kbd> 按选择顺序粘贴。搜索与编辑输入框保留文字操作。</li>
       <li><strong>常用内容：</strong>将记录置顶或加入收藏，方便重复使用；文本内容可直接编辑。</li>
       <li><strong>粘贴方式：</strong>富文本可选择「保留格式」或「仅文字」，图片与文件保留各自的剪贴板格式。</li>
       <li><strong>窗口外观：</strong>可调整主题、列表显示和窗口位置；支持折叠、隐藏及贴边收起。</li>
     </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>统一主界面</h2>
+    <p>从托盘右键选择「打开主窗口」，可在一个窗口中访问首页、设置、跨设备、文本操作和帮助。跨设备页面集中管理局域网配对及电脑之间的文本、图片同步。</p>
   </section>
 
   <section class="qk-section">
@@ -60,14 +66,14 @@
       <li><strong>动作右键菜单：</strong>可进入设置、连续粘贴、暂停 / 恢复监听和退出程序。</li>
       <li><strong>连续粘贴：</strong>适合将多条记录依次插入，与便捷粘贴的快速选取用途不同。</li>
       <li><strong>局域网互传：</strong>点击底栏互传按钮，在剪贴板右侧打开会话；点击左侧历史记录或将记录拖入右栏，即可发送给当前选中的已配对设备。输入区按 <kbd>Enter</kbd> 发送，按 <kbd>Shift</kbd>+<kbd>Enter</kbd> 换行。</li>
-      <li><strong>Windows 设备同步：</strong>在「设置 → 设备同步」用一个总开关控制，初始开启；文本、图片分别可选，已配对电脑直接双向同步，收到后保存到历史并写入当前剪贴板。旧的暂停状态保留；文件继续手动互传。</li>
+      <li><strong>Windows 设备同步：</strong>在主界面的「跨设备」中用一个总开关控制，初始开启；文本、图片分别可选，已配对电脑直接双向同步，收到后保存到历史并写入当前剪贴板。旧的暂停状态保留；文件继续手动互传。</li>
       <li><strong>同图判重：</strong>像素完全相同、仅 PNG 编码或标准附加信息不同的图片复用一个条目，不触发同步回传；图片内容变化时保留新内容。</li>
     </ul>
   </section>
 
   <section class="qk-section">
     <h2>旧版数据与当前范围</h2>
-    <p>程序优先沿用已设置的数据目录；尚未设置时，会检测可用的旧版 C# / WPF 数据目录并继续使用。原 Rust 数据目录保留，可在「管理 → 数据」查看或切换位置。</p>
+    <p>程序优先沿用已设置的数据目录；尚未设置时，会检测可用的旧版 C# / WPF 数据目录并继续使用。原 Rust 数据目录保留，可在主界面的「数据管理」查看或切换位置。</p>
     <p>本版继续沿用原有存储格式，不会自动转换为新格式或移动用户数据。</p>
     <p>切换旧版与 Rust 版时，先正常退出原有程序，再启动需要使用的版本。</p>
     <p class="qk-footnote">当前公开版本以本地剪贴板和收藏为主，手机同步与云同步尚未开放。</p>
@@ -78,7 +84,8 @@
     <p>ClipHost 可以独立运行。使用 Quicker 动作时优先让动作自动下载；独立使用时可在
       <a href="https://github.com/ceastld/eaclip/releases">ClipHost 发布页</a>下载 Windows x64 便携 ZIP，
       解压完整目录后运行 <code>cliphost-app.exe</code>，保留同目录的运行库和资源。当前 Rust 发布提供便携包。</p>
-    <p class="qk-footnote">本次宿主为 <code>0.31.28.0</code>，Quicker V1/V2 入口为 <code>0.31.27.1</code>。<a href="https://github.com/ceastld/eaclip/releases/tag/rust-v0.31.28">查看 0.31.28 更新说明</a>。</p>
+    <p class="qk-footnote">在统一主界面的「关于与更新」可手动检查新版；程序启动后和运行期间每两小时也会自动检查，自动检查不下载、不安装。点击「更新并重启」后才下载并校验升级。旧版首次升到 0.32.0 仍通过 Quicker 动作或便携包完成。</p>
+    <p class="qk-footnote">本次宿主为 <code>0.32.0.0</code>，Quicker V1/V2 入口为 <code>0.31.27.1</code>。<a href="https://github.com/ceastld/eaclip/releases/tag/rust-v0.32.0">查看 0.32.0 更新说明</a>。</p>
   </section>
 
   <section class="qk-section">
