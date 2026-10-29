@@ -9,8 +9,8 @@
     <h2>安装与开始使用</h2>
     <ol>
       <li>将本动作添加到 Quicker 面板，点击运行。首次运行会下载并安装所需组件，请保持网络连接并等待完成。</li>
-      <li>在菜单中展开收藏目录，选择需要的内容；屏幕顶部居中的分类栏可切换窗口、文件、收藏、书签、文本和剪贴板，也可将鼠标移到分类栏内滚动切换。可为本动作绑定常用快捷键，方便随时唤起。</li>
-      <li>菜单内可直接调整当前分类及通用设置；也可右键点击 Quicker 面板上的动作选择「设置」，进入统一主界面管理超级菜单、文件列表和文本操作。</li>
+      <li>在菜单中展开收藏目录，选择需要的内容；菜单上方的分类栏可切换窗口、文件、收藏、书签、文本和剪贴板，也可将鼠标移到分类栏内滚动切换；本次打开内切换分类或打开浏览栏时，分类栏保持位置。可为本动作绑定常用快捷键，方便随时唤起。</li>
+      <li>分类栏末端的齿轮可调整当前分类及通用设置，右键分类可直达对应设置；也可右键点击 Quicker 面板上的动作选择「设置」，进入统一主界面管理超级菜单、文件列表和文本操作。</li>
     </ol>
     <p>Windows 10 / 11；Quicker V1 / V2 使用各自的启动依赖。本版安装入口统一使用 x64 宿主，GPUI 界面无需 WebView2，也无需为 ClipHost 单独安装 .NET 10 运行时。</p>
   </section>
@@ -26,6 +26,17 @@
       <li><strong>其它入口：</strong>可通过动作参数直接打开浏览器书签或指定分类。</li>
     </ul>
     <p class="qk-footnote">菜单显示在「设置 → 超级菜单」调整；ClipHost 自身的全局快捷键在「设置 → 触发」中修改。打开或操作超级菜单时，贴边隐藏的剪贴板保持收起。</p>
+  </section>
+
+  <section class="qk-section">
+    <h2>贴顶晾衣绳：从屏幕顶边浏览文件</h2>
+    <p>在「设置 → 超级菜单 → 文件菜单」开启「贴顶晾衣绳」（默认关闭）。它与超级菜单的「文件」分类并存，共用自定义目录；前台为全屏程序时停用。</p>
+    <ul>
+      <li><strong>展开与浏览：</strong>指针停留在所在屏幕顶边展开标签，悬停标签打开文件纸片，可在纸片内进入下一级或返回。离开或单击别处收起。</li>
+      <li><strong>固定纸片：</strong>点击夹子固定，绳子收起后仍可查看，最多固定 3 张；单击条目沿用文件菜单的定位、转到或打开规则，<kbd>Ctrl</kbd> + 单击保持展开。</li>
+      <li><strong>整理与拖放：</strong>拖动自定义标签排序，拖到取下区域移出列表，取下后 6 秒内可撤销；拖入已有文件夹可添加到绳上，纸片中的文件可复制拖出。取下标签不会删除实际文件或目录。</li>
+      <li><strong>键盘操作：</strong>指针位于绳子或纸片上时，用方向键浏览，<kbd>Enter</kbd> 执行、<kbd>Ctrl</kbd> + <kbd>Enter</kbd> 保持展开，空格固定或松开纸片，<kbd>Esc</kbd> 逐层返回或收起。选中自定义根标签时可用 <kbd>Delete</kbd> / <kbd>Backspace</kbd> 取下，撤销期限内按 <kbd>Ctrl</kbd> + <kbd>Z</kbd> 恢复。</li>
+    </ul>
   </section>
 
   <section class="qk-section">
@@ -53,7 +64,7 @@
     <p>日常使用优先由动作完成安装。需要独立运行或手动下载时，可在
       <a href="https://github.com/ceastld/eaclip/releases">ClipHost 发布页</a>下载 Windows x64 便携 ZIP，完整解压后运行 <code>cliphost-app.exe</code>，保留同目录的 DLL 和资源。</p>
     <p class="qk-footnote">在统一主界面的「关于与更新」可手动检查新版；程序启动后和运行期间每两小时也会自动检查，自动检查不下载、不安装。点击「更新并重启」后才下载并校验升级。旧版首次升到 0.32.0 仍通过 Quicker 动作或便携包完成。</p>
-    <p class="qk-footnote">本次宿主为 <code>0.32.2.0</code>，Quicker V1/V2 入口为 <code>0.31.27.1</code>。<a href="https://github.com/ceastld/eaclip/releases/tag/rust-v0.32.2">查看 0.32.2 更新说明</a>。</p>
+    <p class="qk-footnote">本次宿主为 <code>0.32.3.0</code>，Quicker V1/V2 入口为 <code>0.31.27.1</code>。<a href="https://github.com/ceastld/eaclip/releases/tag/rust-v0.32.3">查看 0.32.3 更新说明</a>。</p>
     <p class="qk-footnote">收藏菜单为空时，先确认已添加收藏内容；窗口管理、书签等附加入口可在「超级菜单」设置中开启。首次下载失败时，确认网络可用后重新运行动作。</p>
   </section>
 
