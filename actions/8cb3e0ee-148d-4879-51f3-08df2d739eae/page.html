@@ -1,0 +1,66 @@
+<div class="qk-doc">
+  <header class="qk-hero">
+    <h1>RaiShot</h1>
+    <p class="qk-summary">截图、标注、贴图、文字识别、长截图与录屏，一次点击开始。</p>
+  </header>
+
+  <section class="qk-section">
+    <h2>开始使用</h2>
+    <ol>
+      <li><strong>点击动作</strong>，拖出截图区域，在工具栏添加标注。</li>
+      <li>框选后按 <kbd>Ctrl</kbd> + <kbd>C</kbd> 复制，按鼠标中键贴图，按 <kbd>Esc</kbd> 取消当前操作；按 <kbd>T</kbd> 识别并翻译，按 <kbd>L</kbd> 开始长截图。</li>
+      <li><strong>右键动作</strong>，可选择“区域截图”“启动托盘”或“检查程序文件”。</li>
+    </ol>
+    <p class="qk-footnote">支持 Quicker V1 和 V2。首次使用会自动下载程序与运行库，之后使用本地缓存；首次文字识别还会按需下载模型与字典，请保持联网。</p>
+  </section>
+
+  <section class="qk-section">
+    <h2>可以做什么</h2>
+    <ul>
+      <li><strong>截图与标注</strong>：矩形、箭头、画笔、文字、马赛克、模糊，支持撤销、重做和裁剪。文字单击后随输入变宽，横向拖动可设定换行宽度。</li>
+      <li><strong>图片与文字贴图</strong>：悬浮在其它窗口上方，滚轮缩放、调整透明度，支持标题、分组和关闭后恢复。</li>
+      <li><strong>文字、表格与公式识别</strong>：本地 OCR、表格识别与二维码；支持文字翻译和公式识别，公式可复制为 LaTeX、Markdown 或排版图片。</li>
+      <li><strong>长截图</strong>：手动或自动滚动采集，支持纵向、横向拼接，裁边与删除中间片段。</li>
+      <li><strong>录屏</strong>：录制 MP4 或 GIF，可选择系统声音、麦克风和标注。</li>
+      <li><strong>统一管理</strong>：在主界面查看贴图、截图与录屏历史；支持中文、英文和跟随系统主题。</li>
+    </ul>
+  </section>
+
+  <section class="qk-section">
+    <h2>常用快捷键</h2>
+    <table>
+      <thead>
+        <tr><th>快捷键</th><th>用途</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><kbd>Ctrl</kbd> + <kbd>1</kbd></td><td>截图（程序运行时，默认快捷键）</td></tr>
+        <tr><td><kbd>Ctrl</kbd> + <kbd>2</kbd></td><td>将剪贴板里的图片或文字贴到屏幕（默认快捷键）</td></tr>
+        <tr><td>滚轮 / <kbd>Shift</kbd> + 滚轮</td><td>缩放贴图 / 精细缩放</td></tr>
+        <tr><td><kbd>Ctrl</kbd> + 滚轮</td><td>调整贴图透明度</td></tr>
+        <tr><td><kbd>空格</kbd></td><td>显示或隐藏贴图工具栏</td></tr>
+        <tr><td><kbd>F2</kbd></td><td>编辑贴图标题（工具栏收起时）</td></tr>
+        <tr><td><kbd>Tab</kbd></td><td>缩略收纳或展开贴图</td></tr>
+        <tr><td>双击图像</td><td>普通贴图模式下关闭贴图（可恢复）</td></tr>
+        <tr><td><kbd>Esc</kbd></td><td>取消当前操作或关闭贴图</td></tr>
+      </tbody>
+    </table>
+    <p class="qk-footnote">全局快捷键可在程序设置中修改。动作参数支持 <code>region</code>（截图）、<code>tray</code>（仅启动托盘）和 <code>verify</code>（检查程序文件）。</p>
+  </section>
+
+  <section class="qk-section">
+    <h2>运行要求与升级</h2>
+    <ul>
+      <li>Windows 10/11 64 位系统，需要可用的 D3D11 显示设备；Windows N 的录屏功能需要媒体功能包。</li>
+      <li>所需运行库随程序自动下载，无需手动安装。</li>
+      <li>HDR 截图会转换为 sRGB；多显示器混合缩放仍在持续验证。</li>
+    </ul>
+    <p class="qk-footnote"><strong>升级后请先从旧版本托盘正常退出，再点击动作启动新版。</strong></p>
+  </section>
+
+  <section class="qk-section">
+    <h2>数据与反馈</h2>
+    <p>OCR 在本机运行；翻译和公式识别会向所选服务发送待处理文字或图片。文字翻译默认使用无需密钥的 Index，公式识别默认使用 DeepSeek；可分别配置兼容接口，API Key 按当前 Windows 用户加密保存。</p>
+    <p>设置、贴图、历史和模型缓存保存在本机 <code>%LOCALAPPDATA%\RaiShot</code>。</p>
+    <p class="qk-footnote">使用问题和建议可在本动作的评论区反馈。</p>
+  </section>
+</div>
